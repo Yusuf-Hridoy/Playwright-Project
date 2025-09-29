@@ -17,3 +17,4 @@ const allUrl = {
 
 // Export the config for the chosen environment
 module.exports = allUrl[env];
+

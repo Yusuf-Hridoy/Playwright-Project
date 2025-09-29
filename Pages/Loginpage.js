@@ -11,7 +11,7 @@ class Loginpage{
     }
 
       async gotoLoginPage(url) {
-        await this.page.goto(url);
+        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
     }
 
 
