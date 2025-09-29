@@ -2,7 +2,7 @@ const {test, expect} = require("@playwright/test");
 const env = require ('../utils/TestOption');
 import { Loginpage } from "../Pages/Loginpage";
 
-test('test1', async ({page})=>{
+test('direct login', async ({page})=>{
 
     const login = new Loginpage(page)
   
@@ -13,13 +13,25 @@ test('test1', async ({page})=>{
     await page.close()
 })
 
-test('test2', async ({page})=>{
+test('wrong password', async ({page})=>{
 
     const login = new Loginpage(page)
 
     await login.gotoLoginPage(env.base_url)
 
     await login.LoginT1('standard_user' , 'wrong_password')
+    const errorMessage = await login.getErrorMessage();
+    expect(errorMessage).toBe('Epic sadface: Username and password do not match any user in this service')
+    await page.close()
+})
+
+test('wrong username', async ({page})=>{
+
+    const login = new Loginpage(page)
+
+    await login.gotoLoginPage(env.base_url)
+
+    await login.LoginT1('standard_use' , 'secret_sauce')
     const errorMessage = await login.getErrorMessage();
     expect(errorMessage).toBe('Epic sadface: Username and password do not match any user in this service')
     await page.close()
