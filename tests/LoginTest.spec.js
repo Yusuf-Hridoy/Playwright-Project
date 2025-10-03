@@ -1,5 +1,5 @@
 const {test, expect} = require("@playwright/test");
-const env = require ('../utils/TestOption');
+const env = require ('../utils/Testoption');
 import { Loginpage } from "../Pages/Loginpage";
 
 // Remove page.close() - not needed with Playwright Test
