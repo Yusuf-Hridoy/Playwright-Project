@@ -11,6 +11,9 @@ test('Homepage check', async ({page})=>{
     await login.LoginT1('standard_user' , 'secret_sauce')
     await expect(page).toHaveTitle('Swag Labs')
     await homepage.ClickMenuButton();
+    await homepage.AddToCartBackpack();
+    await homepage.ClickShoppingCart();
+   
 })
 
 

@@ -6,6 +6,9 @@ class Homepage{
         this.page = page;
         this.menuButton = page.locator("#react-burger-menu-btn")
         this.logoutLink = page.locator("#logout_sidebar_link")
+        this.shoppingCart = page.locator(".shopping_cart_link")
+        this.addToCartbackpack = page.locator("button[data-test='add-to-cart-sauce-labs-backpack']")
+
 
        
     }
@@ -18,5 +21,11 @@ class Homepage{
         await this.logoutLink.click();
     }
 
+    async ClickShoppingCart(){
+        await this.shoppingCart.click();
+    }
+    async AddToCartBackpack(){
+        await this.addToCartbackpack.click();
+    }
 
 }
