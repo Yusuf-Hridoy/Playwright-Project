@@ -152,10 +152,7 @@ This project includes a **GitHub Actions** workflow under `.github/workflows/` t
 This ensures every code push or pull request triggers automated test runs, maintaining continuous quality checks.
 
 ### 🐳 Docker Integration (Coming Soon)  
-Docker support will be added to:  
-- Provide consistent test environments across local, staging, and CI servers  
-- Simplify dependency management  
-- Enable one-command test execution (e.g., `docker-compose up test`)  
+
 
 ---
 
