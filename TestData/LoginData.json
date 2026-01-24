@@ -1,0 +1,16 @@
+{
+    "validUser": {
+        "username": "standard_user",
+        "password": "secret_sauce"
+    },
+    "invalidPassword": {
+        "username": "standard_user",
+        "password": "wrong_password",
+        "errorMessage": "Epic sadface: Username and password do not match any user in this service"
+    },
+    "invalidUsername": {
+        "username": "standard_use",
+        "password": "secret_sauce",
+        "errorMessage": "Epic sadface: Username and password do not match any user in this service"
+    }
+}
