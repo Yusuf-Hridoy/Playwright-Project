@@ -9,6 +9,11 @@ class Homepage{
         this.shoppingCart = page.locator(".shopping_cart_link")
         this.addToCartbackpack = page.locator("button[data-test='add-to-cart-sauce-labs-backpack']")
 
+        // filter locator
+        this.sortingDropdown = page.locator("[data-test='product-sort-container']")
+
+        
+
 
        
     }
@@ -26,6 +31,16 @@ class Homepage{
     }
     async AddToCartBackpack(){
         await this.addToCartbackpack.click();
+    }
+
+    async Sorting(){
+        await this.sortingDropdown.click();
+        await this.sortingDropdown.selectOption('Price (low to high)');
+        // i want to print the first product price after sorting to verify that the sorting is working correctly
+        const firstProductPrice = await this.page.locator(".inventory_item_price").first().textContent();
+        console.log("First product price after sorting: " + firstProductPrice);
+
+
     }
 
 }
