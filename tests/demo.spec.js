@@ -9,3 +9,5 @@ test('direct login', async ({page})=>{
     await login.LoginT1('standard_user' , 'secret_sauce')
     await expect(page).toHaveTitle('Swag Labs')
 })
+
+
