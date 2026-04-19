@@ -11,11 +11,7 @@ class Homepage{
 
         // filter locator
         this.sortingDropdown = page.locator("[data-test='product-sort-container']")
-
         
-
-
-       
     }
 
     async ClickMenuButton(){

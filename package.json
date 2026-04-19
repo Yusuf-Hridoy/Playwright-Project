@@ -8,7 +8,9 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "@playwright/test": "^1.55.0",
+    "@percy/cli": "^1.31.11",
+    "@percy/playwright": "^1.1.0",
+    "@playwright/test": "^1.59.1",
     "@types/node": "^24.3.0"
   },
   "dependencies": {
