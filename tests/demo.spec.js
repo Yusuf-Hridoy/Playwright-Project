@@ -1,13 +1,11 @@
-const {test, expect} = require("@playwright/test");
-const env = require ('../utils/Testoption');
-import { Loginpage } from "../Pages/Loginpage";
+const { test, expect } = require("@playwright/test");
+const env = require('../utils/Testoption');
+const { Loginpage } = require('../Pages/Loginpage');
+const testData = require('../TestData/LoginData.json');
 
-// Remove page.close() - not needed with Playwright Test
-test('direct login', async ({page})=>{
-    const login = new Loginpage(page)
-    await login.gotoLoginPage(env.base_url)
-    await login.LoginT1('standard_user' , 'secret_sauce')
-    await expect(page).toHaveTitle('Swag Labs')
-})
-
-
+test('direct login', async ({ page }) => {
+    const login = new Loginpage(page);
+    await login.goto(env.base_url);
+    await login.login(testData.validUser.username, testData.validUser.password);
+    await expect(page).toHaveTitle('Swag Labs');
+});

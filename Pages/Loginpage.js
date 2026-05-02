@@ -1,24 +1,20 @@
-const env = require ('../utils/Testoption');
-exports.Loginpage =
-class Loginpage{
-
-    constructor(page){
+exports.Loginpage = class Loginpage {
+    constructor(page) {
         this.page = page;
-        this.username = page.locator("#user-name")
-        this.password = page.locator("#password")
-        this.loginbutton = page.locator("#login-button")
-        this.errorMessage = page.locator("h3[data-test='error']")
+        this.username = page.locator("#user-name");
+        this.password = page.locator("#password");
+        this.loginButton = page.locator("#login-button");
+        this.errorMessage = page.locator("h3[data-test='error']");
     }
 
-      async gotoLoginPage(url) {
+    async goto(url) {
         await this.page.goto(url, { waitUntil: 'domcontentloaded' });
     }
 
-
-    async LoginT1 (username , password){
+    async login(username, password) {
         await this.username.fill(username);
-        await this.password.fill(password)
-        await this.loginbutton.click()
+        await this.password.fill(password);
+        await this.loginButton.click();
     }
 
     async getErrorMessage() {
@@ -27,6 +23,4 @@ class Loginpage{
         }
         return null;
     }
-
-
-}
+};
