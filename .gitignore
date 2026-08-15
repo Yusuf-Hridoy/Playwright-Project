@@ -15,3 +15,9 @@ node_modules/
 
 # Environment variables
 .env
+
+# Dashboard virtual environment, local database, and generated reports
+dashboard/.venv/
+dashboard/testcenter.db
+dashboard/reports/
+.dashboard-run-*.config.js
