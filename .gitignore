@@ -21,3 +21,8 @@ dashboard/.venv/
 dashboard/testcenter.db
 dashboard/reports/
 .dashboard-run-*.config.js
+
+# Python virtual environments
+myenv/
+venv/
+.env/
