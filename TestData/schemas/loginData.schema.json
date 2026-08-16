@@ -1,0 +1,39 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "validUser": {
+            "$ref": "#/definitions/user"
+        },
+        "lockedOutUser": {
+            "$ref": "#/definitions/userWithError"
+        },
+        "invalidPassword": {
+            "$ref": "#/definitions/userWithError"
+        },
+        "invalidUsername": {
+            "$ref": "#/definitions/userWithError"
+        }
+    },
+    "required": ["validUser", "invalidPassword", "invalidUsername"],
+    "additionalProperties": true,
+    "definitions": {
+        "user": {
+            "type": "object",
+            "properties": {
+                "username": { "type": "string", "minLength": 1 },
+                "password": { "type": "string", "minLength": 1 }
+            },
+            "required": ["username", "password"]
+        },
+        "userWithError": {
+            "type": "object",
+            "properties": {
+                "username": { "type": "string", "minLength": 1 },
+                "password": { "type": "string", "minLength": 1 },
+                "errorMessage": { "type": "string", "minLength": 1 }
+            },
+            "required": ["username", "password", "errorMessage"]
+        }
+    }
+}

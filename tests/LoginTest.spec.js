@@ -1,6 +1,5 @@
-const { test, expect } = require("@playwright/test");
+const { test, expect } = require('../fixtures/base.fixture');
 const env = require('../utils/Testoption');
-const { Loginpage } = require('../Pages/Loginpage');
 const testData = require('../TestData/LoginData.json');
 const percySnapshot = require('@percy/playwright');
 
@@ -10,29 +9,38 @@ test.describe('Login', () => {
         await percySnapshot(page, 'Login Page');
     });
 
-    test('valid login', async ({ page }) => {
-        const login = new Loginpage(page);
-        await login.goto(env.base_url);
-        await login.login(testData.validUser.username, testData.validUser.password);
+    test('valid login', async ({ page, loginPage }) => {
+        await loginPage.goto(env.base_url);
+        await loginPage.login(testData.validUser.username, testData.validUser.password);
         await expect(page).toHaveTitle('Swag Labs');
         await percySnapshot(page, 'Homepage - Logged In');
     });
 
-    test('wrong password', async ({ page }) => {
-        const login = new Loginpage(page);
-        await login.goto(env.base_url);
-        await login.login(testData.invalidPassword.username, testData.invalidPassword.password);
-        const errorMessage = await login.getErrorMessage();
-        expect(errorMessage).toBe(testData.invalidPassword.errorMessage);
-        await percySnapshot(page, 'Login - Wrong Password Error');
-    });
+    const invalidLoginScenarios = [
+        {
+            name: 'wrong password',
+            user: testData.invalidPassword,
+            snapshotName: 'Login - Wrong Password Error',
+        },
+        {
+            name: 'wrong username',
+            user: testData.invalidUsername,
+            snapshotName: 'Login - Wrong Username Error',
+        },
+        {
+            name: 'locked out user',
+            user: testData.lockedOutUser,
+            snapshotName: 'Login - Locked Out User Error',
+        },
+    ];
 
-    test('wrong username', async ({ page }) => {
-        const login = new Loginpage(page);
-        await login.goto(env.base_url);
-        await login.login(testData.invalidUsername.username, testData.invalidUsername.password);
-        const errorMessage = await login.getErrorMessage();
-        expect(errorMessage).toBe(testData.invalidUsername.errorMessage);
-        await percySnapshot(page, 'Login - Wrong Username Error');
-    });
+    for (const scenario of invalidLoginScenarios) {
+        test(`${scenario.name} shows error message`, async ({ page, loginPage }) => {
+            await loginPage.goto(env.base_url);
+            await loginPage.login(scenario.user.username, scenario.user.password);
+            const errorMessage = await loginPage.getErrorMessage();
+            expect(errorMessage).toBe(scenario.user.errorMessage);
+            await percySnapshot(page, scenario.snapshotName);
+        });
+    }
 });

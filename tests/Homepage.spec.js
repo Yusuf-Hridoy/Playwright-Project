@@ -14,6 +14,6 @@ test.describe('Homepage', () => {
         await homePage.addToCartBackpack();
         await expect(homePage.cartBadge).toHaveText('1');
         await homePage.clickShoppingCart();
-        expect(await cartPage.getCartItems()).toBe(1);
+        expect(await cartPage.getCartItemsCount()).toBe(1);
     });
 });

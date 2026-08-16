@@ -1,14 +1,12 @@
-exports.Loginpage = class Loginpage {
+const { BasePage } = require('./BasePage');
+
+exports.Loginpage = class Loginpage extends BasePage {
     constructor(page) {
-        this.page = page;
+        super(page);
         this.username = page.locator("#user-name");
         this.password = page.locator("#password");
         this.loginButton = page.locator("#login-button");
         this.errorMessage = page.locator("h3[data-test='error']");
-    }
-
-    async goto(url) {
-        await this.page.goto(url, { waitUntil: 'domcontentloaded' });
     }
 
     async login(username, password) {
@@ -19,7 +17,7 @@ exports.Loginpage = class Loginpage {
 
     async getErrorMessage() {
         if (await this.errorMessage.isVisible()) {
-            return (await this.errorMessage.textContent()).trim();
+            return await this.getText(this.errorMessage);
         }
         return null;
     }

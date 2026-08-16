@@ -1,7 +1,7 @@
 const { test, expect } = require("../fixtures/base.fixture");
 const env = require('../utils/Testoption');
 const testData = require('../TestData/LoginData.json');
-const checkoutData = require('../TestData/CheckoutData.json');
+const { generateCheckoutData } = require('../TestData/dataFactory');
 
 test.describe('End-to-End Checkout', () => {
     test.beforeEach(async ({ page, loginPage }) => {
@@ -10,20 +10,27 @@ test.describe('End-to-End Checkout', () => {
         await expect(page).toHaveTitle('Swag Labs');
     });
 
-    test('should complete full purchase flow', async ({ homePage, cartPage, checkoutPage, checkoutOverviewPage }) => {
-        await homePage.clickMenuButton();
-        await homePage.addToCartBackpack();
-        await expect(homePage.cartBadge).toHaveText('1');
-        await homePage.clickShoppingCart();
-        expect(await cartPage.getCartItems()).toBe(1);
-        await cartPage.clickCheckoutButton();
-        await checkoutPage.fillCheckoutInformation(
-            checkoutData.valid.firstName,
-            checkoutData.valid.lastName,
-            checkoutData.valid.postalCode
-        );
-        await checkoutOverviewPage.clickFinishButton();
-        const message = await checkoutOverviewPage.getConfirmationMessage();
-        expect(message).toBe('Thank you for your order!');
-    });
+    const checkoutScenarios = [
+        { name: 'standard profile', data: generateCheckoutData() },
+        { name: 'international-style profile', data: { firstName: 'Søren', lastName: 'Müller', postalCode: 'DK-2100' } },
+    ];
+
+    for (const scenario of checkoutScenarios) {
+        test(`should complete full purchase flow with ${scenario.name}`, async ({ homePage, cartPage, checkoutPage, checkoutOverviewPage }) => {
+            await homePage.clickMenuButton();
+            await homePage.addToCartBackpack();
+            await expect(homePage.cartBadge).toHaveText('1');
+            await homePage.clickShoppingCart();
+            expect(await cartPage.getCartItemsCount()).toBe(1);
+            await cartPage.clickCheckoutButton();
+            await checkoutPage.fillCheckoutInformation(
+                scenario.data.firstName,
+                scenario.data.lastName,
+                scenario.data.postalCode
+            );
+            await checkoutOverviewPage.clickFinishButton();
+            const message = await checkoutOverviewPage.getConfirmationMessage();
+            expect(message).toBe('Thank you for your order!');
+        });
+    }
 });

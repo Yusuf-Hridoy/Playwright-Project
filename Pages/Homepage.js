@@ -1,6 +1,8 @@
-exports.Homepage = class Homepage {
+const { BasePage } = require('./BasePage');
+
+exports.Homepage = class Homepage extends BasePage {
     constructor(page) {
-        this.page = page;
+        super(page);
         this.menuButton = page.locator("#react-burger-menu-btn");
         this.logoutLink = page.locator("#logout_sidebar_link");
         this.shoppingCart = page.locator(".shopping_cart_link");
@@ -32,10 +34,10 @@ exports.Homepage = class Homepage {
     }
 
     async getProductPrices() {
-        return await this.productPrices.allTextContents();
+        return await this.getAllTextContents(this.productPrices);
     }
 
     async getProductNames() {
-        return await this.productNames.allTextContents();
+        return await this.getAllTextContents(this.productNames);
     }
 };
