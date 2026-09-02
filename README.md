@@ -1,6 +1,8 @@
 # 🎭 Swag Labs E2E Automation
 
-[![Playwright Tests](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/playwright.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/playwright.yml)
+[![Smoke Tests](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/smoke.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/smoke.yml)
+[![Full Regression](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/regression.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/regression.yml)
+[![Nightly Full Regression](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/nightly.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/nightly.yml)
 
 End-to-end test automation framework for [Sauce Demo](https://www.saucedemo.com/) built with **Playwright**, **Page Object Model**, and **Allure Reporting**.
 
@@ -133,11 +135,53 @@ npx allure open allure-report
 
 ## 🔄 CI/CD
 
-Tests run automatically via **GitHub Actions** on every push and pull request to `main`/`master`.
+Tests run automatically via **GitHub Actions**:
+
+| Workflow | Trigger | What it runs |
+|----------|---------|--------------|
+| [Smoke Tests](.github/workflows/smoke.yml) | Pull request to `main`/`master` | `@smoke` tests (fast feedback) |
+| [Full Regression](.github/workflows/regression.yml) | Push to `main`/`master` | Full `@regression` suite, sharded across 4 runners (`--shard=1/4`) with merged reports |
+| [Nightly Full Regression](.github/workflows/nightly.yml) | Daily cron (02:00 UTC) + manual | Full suite against a chosen environment |
+| [Compatibility Matrix](.github/workflows/matrix.yml) | Push to `main`/`master` | `@smoke` suite across Ubuntu/Windows/macOS × Node 20/22 |
+| [Environment Tests](.github/workflows/env-tests.yml) | Manual / `repository_dispatch` | `smoke` or `regression` suite against `dev` / `staging` / `prod` |
+
+**Reliability features:**
+- 🔁 **Retries on CI** — failed tests retry up to 2 times
+- 🍥 **Flaky test tracking** — tests that pass on retry are logged to `flaky-tests.txt` and uploaded as an artifact (`utils/flaky-reporter.js`)
+- 🧩 **Blob report merging** — sharded runs merge into a single HTML report via `npx playwright merge-reports`
 
 **Artifacts uploaded:**
-- `playwright-report/` — HTML test report
+- `playwright-report/` — merged HTML test report
 - `allure-report/` — Rich Allure dashboard
+- `flaky-tests.txt` — flaky test log for root-cause analysis
+
+---
+
+## 🐳 Docker
+
+Run tests in a container with pinned Node.js + browsers (identical local and CI environments):
+
+```bash
+# Build the image
+docker build -t playwright-tests .
+
+# Run the full suite
+docker run --rm playwright-tests
+
+# Run only smoke tests
+docker run --rm playwright-tests npm run test:smoke
+```
+
+---
+
+## 🏷️ Test Tags
+
+Suites are tagged for selective execution:
+
+| Tag | Suites | Command |
+|-----|--------|---------|
+| `@smoke` | Login, Homepage, End-to-End Checkout | `npm run test:smoke` |
+| `@regression` | All suites | `npm run test:regression` |
 
 ---
 

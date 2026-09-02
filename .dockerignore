@@ -1,0 +1,23 @@
+# Dependencies & virtual environments
+node_modules
+venv
+
+# Version control
+.git
+.github
+
+# Test outputs & reports
+test-results
+playwright-report
+allure-results
+allure-report
+blob-report
+flaky-tests.txt
+
+# Local environment files
+.env
+.env.*
+
+# Misc
+*.md
+!README.md

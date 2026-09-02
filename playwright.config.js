@@ -13,12 +13,18 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  /* On CI, tests are sharded across multiple runners, so each shard can run
+     several tests in parallel. Locally, use the default (CPU-based). */
+  workers: process.env.CI ? 4 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters.
+     - html + allure-playwright: human-readable reports.
+     - ./utils/flaky-reporter.js: logs flaky tests (see imple.md 3.6).
+     - blob (CI only): per-shard reports merged into one in CI (see imple.md 3.1). */
   reporter: [
     ['html'],
     ['allure-playwright'],
+    ['./utils/flaky-reporter.js'],
+    ...(process.env.CI ? [['blob']] : []),
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

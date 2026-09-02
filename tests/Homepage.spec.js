@@ -2,7 +2,7 @@ const { test, expect } = require("../fixtures/base.fixture");
 const env = require('../utils/Testoption');
 const testData = require('../TestData/LoginData.json');
 
-test.describe('Homepage', () => {
+test.describe('Homepage @smoke @regression', () => {
     test.beforeEach(async ({ page, loginPage }) => {
         await loginPage.goto(env.base_url);
         await loginPage.login(testData.validUser.username, testData.validUser.password);

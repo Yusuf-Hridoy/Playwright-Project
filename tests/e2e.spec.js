@@ -3,7 +3,7 @@ const env = require('../utils/Testoption');
 const testData = require('../TestData/LoginData.json');
 const { generateCheckoutData } = require('../TestData/dataFactory');
 
-test.describe('End-to-End Checkout', () => {
+test.describe('End-to-End Checkout @smoke @regression', () => {
     test.beforeEach(async ({ page, loginPage }) => {
         await loginPage.goto(env.base_url);
         await loginPage.login(testData.validUser.username, testData.validUser.password);
