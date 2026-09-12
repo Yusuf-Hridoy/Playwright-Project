@@ -4,7 +4,7 @@ const testData = require('../TestData/LoginData.json');
 const percySnapshot = require('@percy/playwright');
 
 test.describe('Login @smoke @regression', () => {
-    test('visual snapshot - login page', async ({ page }) => {
+    test('visual snapshot - login page @visual', async ({ page }) => {
         await page.goto(env.base_url);
         await percySnapshot(page, 'Login Page');
     });

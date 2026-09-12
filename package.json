@@ -5,13 +5,17 @@
   "scripts": {
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke",
-    "test:regression": "playwright test --grep @regression"
+    "test:regression": "playwright test --grep @regression",
+    "test:visual": "playwright test --grep @visual",
+    "test:a11y": "playwright test --grep @a11y",
+    "test:responsive": "playwright test --project=Tablet --project=\"Mobile Landscape\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@faker-js/faker": "^10.6.0",
     "@percy/cli": "^1.31.11",
     "@percy/playwright": "^1.1.0",

@@ -1,0 +1,39 @@
+# Visual Regression CI Check (imple.md 5.4)
+# Runs the @visual suite through Percy on every PR. Percy uploads snapshots,
+# computes diffs against the approved baseline, and reviewers approve or
+# reject changes in the Percy UI (build link is printed in the job logs).
+#
+# To BLOCK PRs on unreviewed visual changes: mark this workflow's status
+# check as required in branch protection (Settings > Branches). A PR then
+# cannot merge until the Percy build is approved.
+name: Visual Tests
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  visual:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-node@v5
+      with:
+        node-version: lts/*
+        cache: npm
+    - name: Install dependencies
+      run: npm ci
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+    - name: Run visual tests (Percy)
+      run: npx percy exec -- npx playwright test --grep @visual
+      env:
+        PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: visual-playwright-report
+        path: playwright-report/
+        retention-days: 14

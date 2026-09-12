@@ -60,6 +60,20 @@ export default defineConfig({
       name: 'Mobile',
       testMatch: 'LoginTest.spec.js',
       use: { ...devices['Pixel 5'] },
+    },
+
+    /* Responsive breakpoints (imple.md 5.3) — run only the responsive spec
+       so the full suite is not duplicated at every viewport. */
+    {
+      name: 'Tablet',
+      testMatch: 'responsive.spec.js',
+      use: { ...devices['iPad Mini'] },
+    },
+
+    {
+      name: 'Mobile Landscape',
+      testMatch: 'responsive.spec.js',
+      use: { ...devices['Pixel 5 landscape'] },
     }
 
     /* Test against mobile viewports. */

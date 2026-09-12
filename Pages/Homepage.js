@@ -7,6 +7,8 @@ exports.Homepage = class Homepage extends BasePage {
         this.logoutLink = page.locator("#logout_sidebar_link");
         this.shoppingCart = page.locator(".shopping_cart_link");
         this.addToCartBackpackButton = page.locator("button[data-test='add-to-cart-sauce-labs-backpack']");
+        this.addToCartButtons = page.locator("[data-test^='add-to-cart-']");
+        this.removeButtons = page.locator("[data-test^='remove-']");
         this.sortingDropdown = page.locator("[data-test='product-sort-container']");
         this.cartBadge = page.locator(".shopping_cart_badge");
         this.productPrices = page.locator(".inventory_item_price");
@@ -27,6 +29,25 @@ exports.Homepage = class Homepage extends BasePage {
 
     async addToCartBackpack() {
         await this.addToCartBackpackButton.click();
+    }
+
+    async addToCartByIndex(index) {
+        await this.addToCartButtons.nth(index).click();
+    }
+
+    async addAllToCart() {
+        const count = await this.addToCartButtons.count();
+        for (let i = 0; i < count; i++) {
+            await this.addToCartButtons.nth(i).click();
+        }
+    }
+
+    async getAddToCartButtonsCount() {
+        return await this.addToCartButtons.count();
+    }
+
+    async removeFromCartByIndex(index) {
+        await this.removeButtons.nth(index).click();
     }
 
     async sortBy(optionValue) {

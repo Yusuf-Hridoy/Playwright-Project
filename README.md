@@ -123,6 +123,34 @@ npx allure open allure-report
 
 ---
 
+## 👁️ Visual Testing (Percy)
+
+Visual snapshots are captured with [Percy](https://percy.io/) in tests tagged `@visual` (`LoginTest.spec.js`, `component-visual.spec.js`). Percy renders each snapshot across browsers/widths and diffs it against the approved baseline.
+
+```bash
+# Run visual tests locally (requires PERCY_TOKEN in .env or your shell)
+npx percy exec -- npm run test:visual
+```
+
+### Updating baselines
+
+1. Open the Percy build for your branch (link printed in the job/console logs).
+2. Review each changed snapshot and click **Approve** — this promotes the new render to the baseline.
+3. To intentionally refresh a baseline (e.g. after a design change), approve the whole build, or re-run the build against `main` after merging.
+
+> 💡 Isolate intentional changes: keep redesign PRs separate from functional PRs so visual approvals stay meaningful.
+
+### CI check that blocks PRs on unreviewed changes
+
+The [Visual Tests](.github/workflows/visual.yml) workflow runs on every PR and uploads snapshots to Percy. To enforce review before merge:
+
+1. Add your `PERCY_TOKEN` as a repository secret (Settings → Secrets and variables → Actions).
+2. In branch protection (Settings → Branches), mark the **Visual Tests** status check as **required**.
+
+A PR can then only merge once its Percy build is approved in the Percy UI; unreviewed visual changes block the merge.
+
+---
+
 ## 🏗️ Architecture Highlights
 
 - **Page Object Model (POM)** — maintainable, reusable page classes
@@ -144,6 +172,7 @@ Tests run automatically via **GitHub Actions**:
 | [Nightly Full Regression](.github/workflows/nightly.yml) | Daily cron (02:00 UTC) + manual | Full suite against a chosen environment |
 | [Compatibility Matrix](.github/workflows/matrix.yml) | Push to `main`/`master` | `@smoke` suite across Ubuntu/Windows/macOS × Node 20/22 |
 | [Environment Tests](.github/workflows/env-tests.yml) | Manual / `repository_dispatch` | `smoke` or `regression` suite against `dev` / `staging` / `prod` |
+| [Visual Tests](.github/workflows/visual.yml) | Pull request to `main`/`master` | `@visual` Percy snapshots; approve diffs in Percy to unblock the PR |
 
 **Reliability features:**
 - 🔁 **Retries on CI** — failed tests retry up to 2 times
@@ -182,6 +211,8 @@ Suites are tagged for selective execution:
 |-----|--------|---------|
 | `@smoke` | Login, Homepage, End-to-End Checkout | `npm run test:smoke` |
 | `@regression` | All suites | `npm run test:regression` |
+| `@visual` | Visual & component Percy snapshots | `npm run test:visual` (via `npx percy exec -- ...` in CI) |
+| `@a11y` | axe-core WCAG accessibility scans | `npm run test:a11y` |
 
 ---
 
