@@ -1,28 +1,8 @@
-
-# Playwright
 node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-
-# Allure reports
-/allure-results/
-/allure-report/
-
-# Markdown files
-*.md
-
-# Environment variables
+test-results/
+playwright-report/
+blob-report/
+.auth/
 .env
-
-# Dashboard virtual environment, local database, and generated reports
-dashboard/.venv/
-dashboard/testcenter.db
-dashboard/reports/
-.dashboard-run-*.config.js
-
-# Python virtual environments
-myenv/
 venv/
-.env/
+.venv/

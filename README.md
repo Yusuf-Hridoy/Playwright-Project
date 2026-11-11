@@ -1,245 +1,185 @@
-# 🎭 Swag Labs E2E Automation
+# Tradeloom test framework
 
-[![Smoke Tests](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/smoke.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/smoke.yml)
-[![Full Regression](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/regression.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/regression.yml)
-[![Nightly Full Regression](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/nightly.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/nightly.yml)
+End-to-end tests for **Tradeloom**, a practice stock trading app, written with
+Playwright and TypeScript.
 
-End-to-end test automation framework for [Sauce Demo](https://www.saucedemo.com/) built with **Playwright**, **Page Object Model**, and **Allure Reporting**.
+The app under test is live at <https://practiceapp-six.vercel.app>. It uses
+practice money only. Nothing here touches a real account.
+
+There are 25 tests. They cover logging in, sessions, the market, buying,
+selling, the portfolio, the wallet, the watchlist and price alerts.
+
+## How the parts fit together
+
+```mermaid
+flowchart TD
+    subgraph Inputs
+        C["config/<br/>which site, which clock"]
+        D["data/<br/>demo accounts, stocks, exact text"]
+        B["builders/<br/>account state builder"]
+    end
+
+    T["tests/<br/>25 specs, one behaviour each"]
+    F["fixtures/<br/>test-fixtures.ts"]
+    P["pages/ and components/<br/>actions and locators"]
+    A["Tradeloom<br/>in a real browser"]
+
+    T --> F
+    F --> P
+    P --> A
+
+    C --> F
+    D --> F
+    B --> F
+```
+
+A test asks a page object to do something. The page object clicks and types.
+Only the test decides whether the result is right: page objects and components
+never assert.
+
+## Run it in five minutes
+
+```powershell
+npm ci
+npx playwright install chromium
+npm test
+```
+
+| Command | What it does |
+| --- | --- |
+| `npm test` | Every test against the live app |
+| `npm run test:smoke` | The 6 smoke tests, plus the log in setup |
+| `npm run test:regression` | Every tagged test |
+| `npm run test:headed` | The same, with a browser you can watch |
+| `npm run report` | Opens the HTML report of the last run |
+| `npm run typecheck` | TypeScript only, no browser |
+
+### Against a copy on your laptop
+
+Serve the app yourself, then point the suite at it:
+
+```powershell
+# in one terminal, inside your copy of the app
+python -m http.server 8000
+
+# in another terminal, here
+$env:TEST_ENV = "local"; npm test
+```
+
+The local server is a small one, so the suite runs it with 2 workers. Against
+the live app it uses every core your machine has.
+
+### Against any other link
+
+```powershell
+$env:BASE_URL = "https://my-preview-deploy.vercel.app"; npm test
+```
+
+`BASE_URL` wins over `TEST_ENV`. Copy `.env.example` to `.env` to keep a choice
+without typing it every time. Every run prints the site it is testing on its
+first line.
+
+## What is in each folder
+
+| Folder | What lives there |
+| --- | --- |
+| `config/` | Which site to test, and the seed, clock, locale and time zone |
+| `data/` | The demo accounts, the 8 stocks, and every message a test checks |
+| `builders/` | The account state builder, which writes an exact account into storage |
+| `fixtures/` | The `test` object every spec imports |
+| `pages/` | One page object per page of the app |
+| `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups |
+| `setup/` | Logs in once per demo account and saves the session to `.auth/` |
+| `tests/` | The specs, grouped by feature |
+| `utils/` | Money formatting and the page path rules |
+
+## How the test data works
+
+**Two demo accounts**, copied from the app's own demo data into
+`data/demo-accounts.ts`:
+
+- **Trader** — $8,808.40 in cash, owns 20 LUMA and 5 KRYL, watches four stocks.
+- **Newbie** — $10,000 in cash, owns nothing, watches nothing.
+
+**Saved logins.** A setup project logs in once as each account and saves the
+session. A spec starts already logged in:
+
+```ts
+test.use({ storageState: TRADER.storageState });
+```
+
+**The state builder** is the fast way to set up anything else. It writes the
+account straight into browser storage before the page loads, instead of
+clicking through trades:
+
+```ts
+await accountState
+  .forUser(TRADER)
+  .withCash(50_000)                                          // cents, so $500.00
+  .withHolding('KRYL', { shares: 10, totalPaidCents: 140_000 })
+  .withWatchlist(['NOVA', 'KRYL'])
+  .withAlert('NOVA', { direction: 'above', priceCents: 5_500 })
+  .apply();
+
+await marketPage.goto();
+await accountState.expectApplied();
+```
+
+The app checks the shape of everything it reads and quietly falls back to the
+demo data when something does not fit. That failure is silent, so every test
+that builds state calls `expectApplied()` once the page is open. It compares the
+cash in the top menu with the cash the builder asked for, and fails with a plain
+message when the app has thrown the state away.
+
+## Why the results are the same on every machine
+
+- **A fixed seed.** Every page is opened with `?seed=42`, so the app's made-up
+  prices repeat exactly.
+- **A frozen clock.** Every test starts at Monday 9 November 2026, 10:00 Dhaka
+  time, with the market open, and time stands still until a test moves it with
+  `page.clock.runFor(...)`. Tests that need the market shut say
+  `test.use({ marketTime: MARKET_CLOSED_TIME })`.
+- **One time zone.** `Asia/Dhaka`, the zone the app does all its own date
+  arithmetic in.
+- **One money format.** `en-US` dollars, built with the same
+  `Intl.NumberFormat` the app uses, so `$8,808.40` is never typed by hand.
+
+Expected numbers come from the demo data, the state builder, or the
+`data-cents` attribute the app puts on every money value. No test guesses a
+price.
+
+## Tags and naming
+
+- Tests are tagged with Playwright's `tag` option. Smoke tests carry both
+  `@smoke` and `@regression`; everything else carries `@regression`.
+- The log in setup carries both tags too, because every project depends on it
+  and it has to run under either filter.
+- A test name reads like a sentence about the app, for example *buying 5 KRYL
+  takes the same cash in the summary, the message and the menu*.
+- One behaviour per test. Each one arranges, acts, then asserts, with a blank
+  line between. Longer flows are split with `test.step`.
+- Every test sets up its own account, so they run alone, in any order and in
+  parallel.
+
+## Rules the code follows
+
+- Buttons, links and fields are found with `getByRole` and `getByLabel`.
+  App data is found with `getByTestId`, or by the `data-` attribute the app
+  marks it with. No class selectors and no XPath.
+- Waiting is done with web-first assertions only. There is no
+  `waitForTimeout` anywhere; the clock moves with Playwright's Clock API.
+- Nothing imports the app's own source at run time. What the tests need is
+  copied into `data/`.
+
+## What is next
+
+- More coverage: the profile page, the rules page, keyboard shortcuts and the
+  error states behind the retry buttons.
+- More browsers: Firefox and WebKit, plus a phone-sized viewport.
+- Accessibility checks and visual checks on the pages that matter.
+- CI that runs the smoke tests on every deploy and the full suite nightly.
 
 ---
 
-## 🚀 Tech Stack
-
-| Tool | Purpose |
-|------|---------|
-| [Playwright](https://playwright.dev/) | Cross-browser E2E testing |
-| [Allure](https://qameta.io/allure-report/) | Rich test reporting & analytics |
-| [Percy](https://percy.io/) | Visual regression testing |
-| [GitHub Actions](https://github.com/features/actions) | CI/CD pipeline |
-
----
-
-## 📁 Project Structure
-
-```
-├── .github/workflows/       # CI/CD configuration
-├── fixtures/                # Playwright custom fixtures
-├── Pages/                   # Page Object Models
-│   ├── Loginpage.js
-│   ├── Homepage.js
-│   ├── Cart.js
-│   ├── checkout.js
-│   └── checkoutoverview.js
-├── tests/                   # Test suites
-│   ├── LoginTest.spec.js
-│   ├── Homepage.spec.js
-│   ├── FilterCheck.spec.js
-│   ├── e2e.spec.js
-│   └── demo.spec.js
-├── TestData/                # JSON test data
-│   ├── LoginData.json
-│   └── CheckoutData.json
-├── utils/                   # Utilities & config helpers
-│   └── Testoption.js
-├── playwright.config.js     # Playwright configuration
-└── README.md
-```
-
----
-
-## ⚡ Quick Start
-
-### Prerequisites
-- [Node.js](https://nodejs.org/) LTS
-- npm (comes with Node.js)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/Yusuf-Hridoy/Playwright-Project.git
-cd swag-labs-playwright
-
-# Install dependencies
-npm install
-
-# Install Playwright browsers
-npx playwright install
-```
-
----
-
-## 🧪 Running Tests
-
-### Run all tests
-```bash
-npx playwright test
-```
-
-### Run a specific test file
-```bash
-npx playwright test LoginTest.spec.js
-```
-
-### Run in headed mode (see the browser)
-```bash
-npx playwright test --headed
-```
-
-### Run in a specific browser
-```bash
-npx playwright test --project=chromium
-```
-
-### Run with UI mode (great for debugging)
-```bash
-npx playwright test --ui
-```
-
----
-
-## 📊 Test Reporting
-
-### HTML Report (Built-in)
-```bash
-npx playwright test
-npx playwright show-report
-```
-
-### Allure Report
-```bash
-# Run tests to generate allure-results
-npx playwright test
-
-# Generate and open Allure report
-npx allure generate allure-results --clean -o allure-report
-npx allure open allure-report
-```
-
-### Artifacts on Failure
-- 📸 **Screenshots** — captured automatically on test failure
-- 🎥 **Video recordings** — retained only for failed tests
-- 📋 **Traces** — interactive timeline for debugging
-
----
-
-## 👁️ Visual Testing (Percy)
-
-Visual snapshots are captured with [Percy](https://percy.io/) in tests tagged `@visual` (`LoginTest.spec.js`, `component-visual.spec.js`). Percy renders each snapshot across browsers/widths and diffs it against the approved baseline.
-
-```bash
-# Run visual tests locally (requires PERCY_TOKEN in .env or your shell)
-npx percy exec -- npm run test:visual
-```
-
-### Updating baselines
-
-1. Open the Percy build for your branch (link printed in the job/console logs).
-2. Review each changed snapshot and click **Approve** — this promotes the new render to the baseline.
-3. To intentionally refresh a baseline (e.g. after a design change), approve the whole build, or re-run the build against `main` after merging.
-
-> 💡 Isolate intentional changes: keep redesign PRs separate from functional PRs so visual approvals stay meaningful.
-
-### CI check that blocks PRs on unreviewed changes
-
-The [Visual Tests](.github/workflows/visual.yml) workflow runs on every PR and uploads snapshots to Percy. To enforce review before merge:
-
-1. Add your `PERCY_TOKEN` as a repository secret (Settings → Secrets and variables → Actions).
-2. In branch protection (Settings → Branches), mark the **Visual Tests** status check as **required**.
-
-A PR can then only merge once its Percy build is approved in the Percy UI; unreviewed visual changes block the merge.
-
----
-
-## 🏗️ Architecture Highlights
-
-- **Page Object Model (POM)** — maintainable, reusable page classes
-- **Custom Fixtures** — auto-instantiated page objects via `fixtures/base.fixture.js`
-- **Data-Driven Testing** — credentials and checkout data stored in JSON
-- **Cross-Browser** — Chromium, Firefox, WebKit, and Mobile (Pixel 5)
-- **Visual Testing** — Percy snapshots for critical UI states
-
----
-
-## 🔄 CI/CD
-
-Tests run automatically via **GitHub Actions**:
-
-| Workflow | Trigger | What it runs |
-|----------|---------|--------------|
-| [Smoke Tests](.github/workflows/smoke.yml) | Pull request to `main`/`master` | `@smoke` tests (fast feedback) |
-| [Full Regression](.github/workflows/regression.yml) | Push to `main`/`master` | Full `@regression` suite, sharded across 4 runners (`--shard=1/4`) with merged reports |
-| [Nightly Full Regression](.github/workflows/nightly.yml) | Daily cron (02:00 UTC) + manual | Full suite against a chosen environment |
-| [Compatibility Matrix](.github/workflows/matrix.yml) | Push to `main`/`master` | `@smoke` suite across Ubuntu/Windows/macOS × Node 20/22 |
-| [Environment Tests](.github/workflows/env-tests.yml) | Manual / `repository_dispatch` | `smoke` or `regression` suite against `dev` / `staging` / `prod` |
-| [Visual Tests](.github/workflows/visual.yml) | Pull request to `main`/`master` | `@visual` Percy snapshots; approve diffs in Percy to unblock the PR |
-
-**Reliability features:**
-- 🔁 **Retries on CI** — failed tests retry up to 2 times
-- 🍥 **Flaky test tracking** — tests that pass on retry are logged to `flaky-tests.txt` and uploaded as an artifact (`utils/flaky-reporter.js`)
-- 🧩 **Blob report merging** — sharded runs merge into a single HTML report via `npx playwright merge-reports`
-
-**Artifacts uploaded:**
-- `playwright-report/` — merged HTML test report
-- `allure-report/` — Rich Allure dashboard
-- `flaky-tests.txt` — flaky test log for root-cause analysis
-
----
-
-## 🐳 Docker
-
-Run tests in a container with pinned Node.js + browsers (identical local and CI environments):
-
-```bash
-# Build the image
-docker build -t playwright-tests .
-
-# Run the full suite
-docker run --rm playwright-tests
-
-# Run only smoke tests
-docker run --rm playwright-tests npm run test:smoke
-```
-
----
-
-## 🏷️ Test Tags
-
-Suites are tagged for selective execution:
-
-| Tag | Suites | Command |
-|-----|--------|---------|
-| `@smoke` | Login, Homepage, End-to-End Checkout | `npm run test:smoke` |
-| `@regression` | All suites | `npm run test:regression` |
-| `@visual` | Visual & component Percy snapshots | `npm run test:visual` (via `npx percy exec -- ...` in CI) |
-| `@a11y` | axe-core WCAG accessibility scans | `npm run test:a11y` |
-
----
-
-## 🛡️ Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-ENV=dev
-```
-
-Supported environments: `dev`, `staging`, `prod` (configured in `utils/Testoption.js`)
-
-> ⚠️ **Never commit `.env` to version control.**
-
----
-
-## 📝 Test Coverage
-
-| Feature | Status |
-|---------|--------|
-| Login (valid & invalid) | ✅ |
-| Product sorting / filtering | ✅ |
-| Add to cart | ✅ |
-| Cart verification | ✅ |
-| Checkout end-to-end flow | ✅ |
-| Visual regression (Percy) | ✅ |
-| Cross-browser testing | ✅ |
-
----
+The old Swag Labs suite that used to live in this repository is kept under the
+git tag `swag-labs-v1`.

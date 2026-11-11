@@ -1,30 +1,20 @@
 {
-  "name": "playwright-project",
+  "name": "tradeloom-test-framework",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "description": "Playwright + TypeScript end-to-end tests for Tradeloom, a practice stock trading app.",
   "scripts": {
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke",
     "test:regression": "playwright test --grep @regression",
-    "test:visual": "playwright test --grep @visual",
-    "test:a11y": "playwright test --grep @a11y",
-    "test:responsive": "playwright test --project=Tablet --project=\"Mobile Landscape\""
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@faker-js/faker": "^10.6.0",
-    "@percy/cli": "^1.31.11",
-    "@percy/playwright": "^1.1.0",
-    "@playwright/test": "^1.59.1",
-    "@types/node": "^24.3.0",
-    "ajv": "^8.20.0",
-    "allure-playwright": "^3.7.1"
-  },
-  "dependencies": {
-    "dotenv": "^17.2.1"
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "dotenv": "18.0.10",
+    "typescript": "7.0.2"
   }
 }
