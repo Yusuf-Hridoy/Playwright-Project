@@ -10,6 +10,14 @@ const IS_CI = !!process.env.CI;
 // independent either way: this changes how many run at once, nothing else.
 const LOCAL_SERVER_WORKERS = 2;
 
+// Phone tests check a phone layout, so they only make sense on the phone
+// project. Every other project leaves them alone.
+const MOBILE_ONLY = /@mobile/;
+
+// Firefox and WebKit are there to catch a browser difference in the main
+// journeys, not to run the whole suite three times over.
+const SMOKE_ONLY = /@smoke/;
+
 export default defineConfig({
   testDir: './tests',
 
@@ -49,6 +57,25 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      grepInvert: MOBILE_ONLY,
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      grep: SMOKE_ONLY,
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+      grep: SMOKE_ONLY,
+      dependencies: ['setup'],
+    },
+    {
+      name: 'mobile',
+      use: { ...devices['Pixel 7'] },
+      grep: MOBILE_ONLY,
       dependencies: ['setup'],
     },
   ],

@@ -6,8 +6,10 @@ Playwright and TypeScript.
 The app under test is live at <https://practiceapp-six.vercel.app>. It uses
 practice money only. Nothing here touches a real account.
 
-There are 25 tests. They cover logging in, sessions, the market, buying,
-selling, the portfolio, the wallet, the watchlist and price alerts.
+There are **70 tests**. They cover logging in, sessions, the market, buying,
+selling, the portfolio, the wallet and its card payments, the watchlist, price
+alerts and the profile page, plus network failures, accessibility, how three
+pages look, and the app on a phone.
 
 ## How the parts fit together
 
@@ -15,11 +17,11 @@ selling, the portfolio, the wallet, the watchlist and price alerts.
 flowchart TD
     subgraph Inputs
         C["config/<br/>which site, which clock"]
-        D["data/<br/>demo accounts, stocks, exact text"]
+        D["data/<br/>demo accounts, stocks, exact text,<br/>known accessibility issues"]
         B["builders/<br/>account state builder"]
     end
 
-    T["tests/<br/>25 specs, one behaviour each"]
+    T["tests/<br/>70 specs, one behaviour each"]
     F["fixtures/<br/>test-fixtures.ts"]
     P["pages/ and components/<br/>actions and locators"]
     A["Tradeloom<br/>in a real browser"]
@@ -41,15 +43,20 @@ never assert.
 
 ```powershell
 npm ci
-npx playwright install chromium
+npx playwright install chromium firefox webkit
 npm test
 ```
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | Every test against the live app |
-| `npm run test:smoke` | The 6 smoke tests, plus the log in setup |
+| `npm test` | Every test, in every project |
+| `npm run test:smoke` | The smoke tests, in all three browsers |
 | `npm run test:regression` | Every tagged test |
+| `npm run test:a11y` | The 8 accessibility checks |
+| `npm run test:visual` | The 3 screenshot checks, in Chromium |
+| `npm run test:mobile` | The 3 phone tests, on a Pixel 7 |
+| `npm run test:cross-browser` | The smoke tests in Firefox and WebKit only |
+| `npm run update-snapshots` | Writes new screenshot baselines for this machine |
 | `npm run test:headed` | The same, with a browser you can watch |
 | `npm run report` | Opens the HTML report of the last run |
 | `npm run typecheck` | TypeScript only, no browser |
@@ -79,27 +86,61 @@ $env:BASE_URL = "https://my-preview-deploy.vercel.app"; npm test
 without typing it every time. Every run prints the site it is testing on its
 first line.
 
+## The projects
+
+| Project | Device | What it runs |
+| --- | --- | --- |
+| `setup` | Desktop Chrome | Logs in as all three demo accounts and saves the sessions |
+| `chromium` | Desktop Chrome | Every test except `@mobile` |
+| `firefox` | Desktop Firefox | `@smoke` only |
+| `webkit` | Desktop Safari | `@smoke` only |
+| `mobile` | Pixel 7 | `@mobile` only |
+
+Every project depends on `setup`, and every project shares the same locale,
+time zone, base URL and test id attribute. Only the device changes.
+
+Firefox and WebKit run the main journeys, not the whole suite three times over.
+A difference between browsers usually shows up in a journey, and a suite that
+takes three times as long gets run three times less often.
+
+## Tags
+
+| Tag | What it marks |
+| --- | --- |
+| `@smoke` | The main journeys. Also run in Firefox and WebKit |
+| `@regression` | Every test carries this one |
+| `@a11y` | An axe-core pass over one page |
+| `@visual` | A screenshot compared against a baseline |
+| `@network` | A test that holds back, breaks or rewrites a request |
+| `@mobile` | A phone test, run only in the `mobile` project |
+
+The log in setup carries every tag, because each project depends on it and it
+has to survive whichever filter is used.
+
 ## What is in each folder
 
 | Folder | What lives there |
 | --- | --- |
 | `config/` | Which site to test, and the seed, clock, locale and time zone |
-| `data/` | The demo accounts, the 8 stocks, and every message a test checks |
+| `data/` | The demo accounts, the 8 stocks, every message a test checks, and the known accessibility issues |
 | `builders/` | The account state builder, which writes an exact account into storage |
 | `fixtures/` | The `test` object every spec imports |
 | `pages/` | One page object per page of the app |
-| `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups |
+| `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups, the card payment frame |
 | `setup/` | Logs in once per demo account and saves the session to `.auth/` |
+| `test-files/` | The one small photo the profile tests upload |
 | `tests/` | The specs, grouped by feature |
-| `utils/` | Money formatting and the page path rules |
+| `utils/` | Money formatting, page paths, the accessibility scan and a couple of measurements |
 
 ## How the test data works
 
-**Two demo accounts**, copied from the app's own demo data into
+**Three demo accounts**, copied from the app's own demo data into
 `data/demo-accounts.ts`:
 
-- **Trader** — $8,808.40 in cash, owns 20 LUMA and 5 KRYL, watches four stocks.
+- **Trader** — $8,808.40 in cash, owns 20 LUMA and 5 KRYL, watches four stocks,
+  and has a filled-in profile.
 - **Newbie** — $10,000 in cash, owns nothing, watches nothing.
+- **Busy** — seven holdings and 24 rows of history.
 
 **Saved logins.** A setup project logs in once as each account and saves the
 session. A spec starts already logged in:
@@ -109,8 +150,8 @@ test.use({ storageState: TRADER.storageState });
 ```
 
 **The state builder** is the fast way to set up anything else. It writes the
-account straight into browser storage before the page loads, instead of
-clicking through trades:
+account, the watchlist and the profile straight into browser storage before the
+page loads, instead of clicking through trades:
 
 ```ts
 await accountState
@@ -119,6 +160,7 @@ await accountState
   .withHolding('KRYL', { shares: 10, totalPaidCents: 140_000 })
   .withWatchlist(['NOVA', 'KRYL'])
   .withAlert('NOVA', { direction: 'above', priceCents: 5_500 })
+  .withProfile({ displayName: 'Mira Khan', theme: 'light' })
   .apply();
 
 await marketPage.goto();
@@ -131,14 +173,117 @@ that builds state calls `expectApplied()` once the page is open. It compares the
 cash in the top menu with the cash the builder asked for, and fails with a plain
 message when the app has thrown the state away.
 
+### `test-files/`
+
+One file is committed: `small-photo.png`, a 24×24 PNG of about 100 bytes. It is
+the good photo the profile tests upload.
+
+The other two files a test needs are built inside the test, with
+`setInputFiles({ name, mimeType, buffer })`: a 1.1 MB buffer for the "too big"
+rule, and a text file for the "wrong type" rule. Keeping a megabyte of junk out
+of the repository is half the reason; the other half is that the test then says,
+in the test itself, exactly what makes the file wrong.
+
+## Paying by card
+
+Adding money opens a card form inside an iframe. `components/payment-frame.ts`
+wraps it, and `WalletPage.addMoney('$5,000')` picks the amount, presses Add and
+pays with the test card that always works:
+
+```ts
+await walletPage.addMoney('$5,000');
+```
+
+Pressing Pay starts a two second "Processing…" timer inside the frame. The
+clock is frozen, so the component moves it along with `page.clock.runFor` rather
+than waiting. The three test cards, and one the app has never heard of, are
+exported from the same file for tests about the card itself.
+
+## Accessibility checks
+
+`npm run test:a11y` runs one axe-core pass per page: log in, Market, Stock,
+Portfolio, Wallet, Watchlist, Profile and Rules.
+
+- The rules used are WCAG 2.1, levels A and AA (`wcag2a`, `wcag2aa`, `wcag21a`,
+  `wcag21aa`).
+- A page **fails on any serious or critical problem**. Smaller problems are
+  printed in the failure text but do not fail a test on their own.
+- A failure prints each problem's rule id, how bad it is, axe's own description
+  and every element it was found on, so the report can be read without opening
+  a trace.
+- Axe leans on its own timers, so each of these tests lets the frozen clock go
+  with `page.clock.resume()` before scanning.
+
+**Known issues live in `data/a11y-known-issues.ts`.** A rule is listed there
+only when the app is really wrong, with the page, the rule id and one sentence
+saying why, and it is then skipped on that one page and nowhere else. Every
+entry is a bug to fix in the app, not a test that was made to pass.
+
+Two real problems are listed today, both in shared markup:
+
+| Page | Rule | What the app does wrong |
+| --- | --- | --- |
+| log in | `link-in-text-block` | The "How it works" link inside the blurb is told apart from the text around it by colour alone |
+| every signed-in page | `label-content-name-mismatch` | The profile circle shows the initials of the display name, but its `aria-label` is only "Your profile", so its visible text is not part of its accessible name |
+
+## Visual checks
+
+`npm run test:visual` compares three pages against a picture of themselves: the
+log in page, the Market page as the Trader sees it, and the Rules page. Each one
+is a full-page shot with animations turned off and a one per cent allowance for
+odd pixels.
+
+```ts
+await expect(page).toHaveScreenshot('market-page.png', {
+  fullPage: true,
+  animations: 'disabled',
+  maxDiffPixelRatio: 0.01,
+});
+```
+
+These run in Chromium only. Nothing on those pages moves: the clock is frozen,
+the seed is 42 and the account is fixed.
+
+**Screenshots are kept per operating system.** The same page drawn with Windows
+fonts, Mac fonts and Linux fonts is never pixel for pixel the same, so Playwright
+saves each baseline with the platform in its name, like
+`market-page-chromium-win32.png`. The baselines in this repository were made on
+Windows. Linux baselines for CI come in Phase 3.
+
+After a change to the app you meant to make:
+
+```powershell
+npm run update-snapshots
+```
+
+Then look at the new pictures before keeping them. A baseline updated without
+looking is a check that has stopped checking.
+
+## Network checks
+
+Four tests take the app's one request for its stock list,
+`**/data/stocks.json`, and do something unkind to it:
+
+- abort it, so the Market page shows "Couldn't load prices", then remove the
+  route and press Try again,
+- hold it until the test lets it go, so the three grey loading rows can be seen
+  before the real ones (a promise the test resolves, never a timer),
+- answer it with a list of two stocks, so the page shows exactly two rows,
+- abort it on a Stock page, which shows the same load error.
+
+## The app on a phone
+
+Three tests run in the `mobile` project only, on a Pixel 7: logging in and
+buying works at phone size, none of the six signed-in pages scrolls sideways,
+and the alert editor sits under the watchlist instead of beside it.
+
 ## Why the results are the same on every machine
 
 - **A fixed seed.** Every page is opened with `?seed=42`, so the app's made-up
   prices repeat exactly.
 - **A frozen clock.** Every test starts at Monday 9 November 2026, 10:00 Dhaka
-  time, with the market open, and time stands still until a test moves it with
-  `page.clock.runFor(...)`. Tests that need the market shut say
-  `test.use({ marketTime: MARKET_CLOSED_TIME })`.
+  time, and time stands still until a test moves it with
+  `page.clock.runFor(...)`.
 - **One time zone.** `Asia/Dhaka`, the zone the app does all its own date
   arithmetic in.
 - **One money format.** `en-US` dollars, built with the same
@@ -148,12 +293,21 @@ Expected numbers come from the demo data, the state builder, or the
 `data-cents` attribute the app puts on every money value. No test guesses a
 price.
 
+### The market is open all day now
+
+Market hours are gone. The market is open every hour of every day, and the only
+thing that shuts it is `?market=closed` on the link. A test that wants it shut
+says so, and every page its page objects open carries the switch:
+
+```ts
+test.use({ marketClosed: true });
+```
+
 ## Tags and naming
 
 - Tests are tagged with Playwright's `tag` option. Smoke tests carry both
-  `@smoke` and `@regression`; everything else carries `@regression`.
-- The log in setup carries both tags too, because every project depends on it
-  and it has to run under either filter.
+  `@smoke` and `@regression`; every other test carries `@regression` and
+  whichever of `@a11y`, `@visual`, `@network` and `@mobile` fits.
 - A test name reads like a sentence about the app, for example *buying 5 KRYL
   takes the same cash in the summary, the message and the menu*.
 - One behaviour per test. Each one arranges, acts, then asserts, with a blank
@@ -173,11 +327,10 @@ price.
 
 ## What is next
 
-- More coverage: the profile page, the rules page, keyboard shortcuts and the
-  error states behind the retry buttons.
-- More browsers: Firefox and WebKit, plus a phone-sized viewport.
-- Accessibility checks and visual checks on the pages that matter.
-- CI that runs the smoke tests on every deploy and the full suite nightly.
+- CI: the smoke tests on every deploy, the full suite nightly, and Linux
+  screenshot baselines to go with it.
+- API-level tests.
+- Receipts, the history filters and the history pages.
 
 ---
 

@@ -3,6 +3,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 import { StockRow } from '../components/stock-row';
 import { TEXT } from '../data/expected-text';
 
@@ -27,8 +28,15 @@ export class MarketPage extends BasePage {
   readonly closedBanner: Locator;
   readonly watchlistFullError: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  /** The grey bars that stand in for the rows while the prices are loading. */
+  readonly loadingBox: Locator;
+  readonly loadingBars: Locator;
+  /** The "Couldn't load prices" box, and the button that tries again. */
+  readonly errorBox: Locator;
+  readonly retryButton: Locator;
+
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.table = page.getByTestId('market-table');
 
     this.totalWorth = page.getByTestId('stat-total-worth');
@@ -46,6 +54,11 @@ export class MarketPage extends BasePage {
     this.emptyMessage = page.getByTestId('market-empty');
     this.closedBanner = page.getByTestId('market-closed-banner');
     this.watchlistFullError = page.getByTestId('watchlist-full-error');
+
+    this.loadingBox = page.getByTestId('market-loading');
+    this.loadingBars = this.loadingBox.locator('span');
+    this.errorBox = page.getByTestId('market-error');
+    this.retryButton = page.getByRole('button', { name: TEXT.common.tryAgain });
   }
 
   protected override readyElement(): Locator {
@@ -64,6 +77,28 @@ export class MarketPage extends BasePage {
 
   async goto(): Promise<void> {
     await this.open('market');
+  }
+
+  /**
+   * Asks for the Market page without waiting for the table. A test that holds
+   * the stock list back, or turns it into an error, needs the half-drawn page.
+   */
+  async gotoWithoutPrices(): Promise<void> {
+    await this.openWithoutWaiting('market');
+  }
+
+  /**
+   * Opens the Market page and comes straight back, without waiting for the
+   * load event. A test that holds the stock list back needs the half-drawn
+   * page, and waiting for load would wait for the held request as well.
+   */
+  async gotoWhileLoading(): Promise<void> {
+    await this.page.goto(this.urlFor('market'), { waitUntil: 'commit' });
+  }
+
+  /** Presses "Try again" in the error box. */
+  async retry(): Promise<void> {
+    await this.retryButton.click();
   }
 
   /** Asks for the Market page without a session, so the app sends us to log in. */

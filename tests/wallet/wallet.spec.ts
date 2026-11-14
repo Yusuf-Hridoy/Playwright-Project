@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '../../fixtures/test-fixtures';
 import { ADD_CHOICES_CENTS, ADD_LIMIT_CENTS, NEWBIE, TRADER } from '../../data/demo-accounts';
-import { addLimitReached, addedMessage, historyFileName } from '../../data/expected-text';
+import { PAYING_CARD_LAST4 } from '../../components/payment-frame';
+import { addLimitReached, addedWithCard, historyFileName } from '../../data/expected-text';
 import { MARKET_DAY } from '../../config/test-settings';
 import { money } from '../../utils/money';
 
@@ -23,14 +24,17 @@ test.describe('Adding practice money', () => {
 
       await walletPage.addMoney('$10,000');
 
-      await expect(walletPage.addMessage).toHaveText(addedMessage('$10,000', money(cashCents)));
+      await expect(walletPage.addMessage).toHaveText(
+        addedWithCard('$10,000', PAYING_CARD_LAST4, money(cashCents)),
+      );
       await expect(walletPage.cash).toHaveAttribute('data-cents', String(cashCents));
     }
 
-    await test.step('one more top-up is refused', async () => {
-      await walletPage.addMoney('$10,000');
+    await test.step('one more top-up is refused before the card step opens', async () => {
+      await walletPage.startAdding('$10,000');
 
       await expect(walletPage.addError).toHaveText(addLimitReached());
+      await expect(walletPage.payStep).toBeHidden();
       await expect(walletPage.addMessage).toBeEmpty();
       await expect(walletPage.cash).toHaveAttribute('data-cents', String(cashCents));
     });

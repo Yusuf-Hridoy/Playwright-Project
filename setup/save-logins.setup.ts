@@ -3,15 +3,14 @@
 // A spec then starts already logged in:
 //   test.use({ storageState: TRADER.storageState });
 //
-// It carries both tags on purpose. Every other project depends on this one, so
-// it has to run under `--grep @smoke` and `--grep @regression` alike, or the
-// saved sessions would be missing.
+// It carries every tag on purpose. Every other project depends on this one, so
+// it has to survive any `--grep`, or the saved sessions would be missing.
 
 import { test as setup, expect } from '../fixtures/test-fixtures';
 import { DEMO_ACCOUNTS } from '../data/demo-accounts';
 import { money } from '../utils/money';
 
-setup('save a signed-in session for each demo account', { tag: ['@smoke', '@regression'] }, async ({
+setup('save a signed-in session for each demo account', { tag: ['@smoke', '@regression', '@a11y', '@visual', '@network', '@mobile'] }, async ({
   page,
   loginPage,
   marketPage,

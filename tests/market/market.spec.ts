@@ -2,7 +2,6 @@ import { test, expect } from '../../fixtures/test-fixtures';
 import { NEWBIE, TRADER } from '../../data/demo-accounts';
 import { STOCKS, SYMBOLS, STOCK_COUNT } from '../../data/stocks';
 import { TEXT, marketClosed, sharesWord } from '../../data/expected-text';
-import { MARKET_CLOSED_TIME } from '../../config/test-settings';
 
 test.describe('The market, seen by someone who owns stocks', () => {
   test.use({ storageState: TRADER.storageState });
@@ -65,8 +64,8 @@ test.describe('The market, seen by someone who owns nothing', () => {
   });
 });
 
-test.describe('The market after hours', () => {
-  test.use({ storageState: TRADER.storageState, marketTime: MARKET_CLOSED_TIME });
+test.describe('The market with the closed switch on the link', () => {
+  test.use({ storageState: TRADER.storageState, marketClosed: true });
 
   test('a closed market says so in the banner and in the menu', { tag: ['@regression'] }, async ({
     marketPage,
@@ -75,7 +74,7 @@ test.describe('The market after hours', () => {
     await marketPage.goto();
 
     await expect(marketPage.closedBanner).toBeVisible();
-    await expect(marketPage.closedBanner).toHaveText(marketClosed(TEXT.marketHours.opensTomorrow));
+    await expect(marketPage.closedBanner).toHaveText(marketClosed());
     await expect(topMenu.marketStatus).toHaveText(TEXT.menu.marketClosed);
   });
 });

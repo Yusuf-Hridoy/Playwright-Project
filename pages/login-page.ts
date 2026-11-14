@@ -2,6 +2,7 @@
 
 import type { Locator, Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 import { TEXT } from '../data/expected-text';
 
 export class LoginPage extends BasePage {
@@ -12,8 +13,8 @@ export class LoginPage extends BasePage {
   /** The two demo account cards under the form. */
   readonly demoRows: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.emailField = page.getByLabel(TEXT.login.emailLabel);
     this.passwordField = page.getByLabel(TEXT.login.passwordLabel);
     this.submitButton = page.getByRole('button', { name: TEXT.login.submit });

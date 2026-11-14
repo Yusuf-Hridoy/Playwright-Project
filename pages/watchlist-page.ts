@@ -3,6 +3,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 import { WatchlistRow } from '../components/watchlist-row';
 import { TEXT } from '../data/expected-text';
 import { centsOf } from '../utils/money';
@@ -20,6 +21,10 @@ export class WatchlistPage extends BasePage {
   readonly emptyMessage: Locator;
   readonly removeAllButton: Locator;
 
+  /** The button that asks the browser for permission, and the line beside it. */
+  readonly browserAlertsButton: Locator;
+  readonly browserAlertsStatus: Locator;
+
   // The alert editor.
   readonly alertEditor: Locator;
   readonly alertEditorClosedHint: Locator;
@@ -34,11 +39,12 @@ export class WatchlistPage extends BasePage {
   readonly alertSaveButton: Locator;
   readonly alertDeleteButton: Locator;
   readonly alertCloseButton: Locator;
+  readonly alertBrowserHint: Locator;
   readonly alertError: Locator;
   readonly alertMessage: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.heading = page.getByRole('heading', { name: TEXT.watchlist.title, exact: true });
 
     this.addSelect = page.getByLabel(TEXT.watchlist.addLabel);
@@ -46,7 +52,9 @@ export class WatchlistPage extends BasePage {
     this.addError = page.getByTestId('watchlist-add-error');
     this.statusLine = page.getByTestId('watchlist-status');
     this.emptyMessage = page.getByTestId('watchlist-empty');
-    this.removeAllButton = page.getByRole('button', { name: 'Remove all' });
+    this.removeAllButton = page.getByRole('button', { name: TEXT.watchlist.removeAll });
+    this.browserAlertsButton = page.getByRole('button', { name: TEXT.watchlist.browserAlertsButton });
+    this.browserAlertsStatus = page.getByTestId('browser-alerts-status');
 
     this.alertEditor = page.getByTestId('alert-editor');
     this.alertEditorClosedHint = page.getByTestId('alert-editor-closed');
@@ -60,6 +68,7 @@ export class WatchlistPage extends BasePage {
     this.alertSaveButton = page.getByRole('button', { name: TEXT.alertEditor.save });
     this.alertDeleteButton = page.getByRole('button', { name: TEXT.alertEditor.delete });
     this.alertCloseButton = page.getByRole('button', { name: TEXT.alertEditor.close, exact: true });
+    this.alertBrowserHint = page.getByTestId('alert-browser-hint');
     this.alertError = page.getByTestId('alert-error');
     this.alertMessage = page.getByTestId('alert-message');
   }
@@ -104,12 +113,36 @@ export class WatchlistPage extends BasePage {
     await this.addButton.click();
   }
 
+  /**
+   * Presses Remove all and leaves the browser's own confirm box standing. The
+   * test answers it with page.once('dialog', ...), which is also how it reads
+   * the question the box is asking.
+   */
+  async pressRemoveAll(): Promise<void> {
+    await this.removeAllButton.click();
+  }
+
   /** Presses Remove all and says yes to the browser's own confirm box. */
   async removeAll(): Promise<void> {
     this.page.once('dialog', (dialog) => {
       void dialog.accept();
     });
     await this.removeAllButton.click();
+  }
+
+  /** Asks the browser for permission to show notifications. */
+  async turnOnBrowserAlerts(): Promise<void> {
+    await this.browserAlertsButton.click();
+  }
+
+  /** Presses Esc, which closes the alert editor and any pop-up. */
+  async pressEscape(): Promise<void> {
+    await this.page.keyboard.press('Escape');
+  }
+
+  /** Presses /, the shortcut that jumps to the "Add a stock" drop-down. */
+  async pressSlash(): Promise<void> {
+    await this.page.keyboard.press('/');
   }
 
   /** The price the editor is quoting right now, in whole cents. */

@@ -2,12 +2,13 @@
 
 import type { Locator, Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 
 export class RulesPage extends BasePage {
   readonly cards: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.cards = page.getByTestId('rules-card');
   }
 

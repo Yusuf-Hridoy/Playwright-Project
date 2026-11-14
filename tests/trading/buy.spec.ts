@@ -1,7 +1,6 @@
 import { test, expect } from '../../fixtures/test-fixtures';
 import { TRADER } from '../../data/demo-accounts';
 import {
-  TEXT,
   boughtDetail,
   boughtTitle,
   confirmBuyTitle,
@@ -10,7 +9,6 @@ import {
   notEnoughCash,
   wholeSharesOnly,
 } from '../../data/expected-text';
-import { MARKET_CLOSED_TIME } from '../../config/test-settings';
 import { money } from '../../utils/money';
 
 test.describe('Buying while the market is open', () => {
@@ -92,8 +90,8 @@ test.describe('Buying while the market is open', () => {
   });
 });
 
-test.describe('Buying after hours', () => {
-  test.use({ storageState: TRADER.storageState, marketTime: MARKET_CLOSED_TIME });
+test.describe('Buying with the closed switch on the link', () => {
+  test.use({ storageState: TRADER.storageState, marketClosed: true });
 
   test('a closed market blocks the trade and leaves the cash alone', { tag: ['@regression'] }, async ({
     stockPage,
@@ -102,12 +100,12 @@ test.describe('Buying after hours', () => {
     await stockPage.goto('KRYL');
 
     await expect(stockPage.closedBanner).toBeVisible();
-    await expect(stockPage.closedBanner).toHaveText(marketClosed(TEXT.marketHours.opensTomorrow));
+    await expect(stockPage.closedBanner).toHaveText(marketClosed());
 
     await stockPage.enterShares(1);
     await stockPage.submit();
 
-    await expect(stockPage.error).toHaveText(marketClosed(TEXT.marketHours.opensTomorrow));
+    await expect(stockPage.error).toHaveText(marketClosed());
     await expect(stockPage.confirmDialog.root).toBeHidden();
     await expect(topMenu.cash).toHaveAttribute('data-cents', String(TRADER.start.cashCents));
   });

@@ -1,8 +1,11 @@
-// The Wallet page: cash, adding practice money, starting over and the history.
+// The Wallet page: cash, adding practice money by card, starting over and
+// the history.
 
 import type { Download, Locator, Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 import { ConfirmDialog } from '../components/confirm-dialog';
+import { PaymentFrame, TEST_CARDS } from '../components/payment-frame';
 import { TEXT } from '../data/expected-text';
 import { centsOf } from '../utils/money';
 
@@ -19,14 +22,21 @@ export class WalletPage extends BasePage {
   readonly addError: Locator;
   readonly addProgress: Locator;
 
+  /** The card step that opens under the amounts (App Phase 4). */
+  readonly payStep: Locator;
+  /** "Paying $5,000". */
+  readonly payAmount: Locator;
+  readonly payCancelButton: Locator;
+  readonly paymentFrame: PaymentFrame;
+
   readonly startOverButton: Locator;
   readonly startOverDialog: ConfirmDialog;
 
   readonly historyTable: Locator;
   readonly downloadButton: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.heading = page.getByRole('heading', { name: TEXT.wallet.title });
     this.cash = page.getByTestId('wallet-cash');
 
@@ -35,6 +45,11 @@ export class WalletPage extends BasePage {
     this.addMessage = page.getByTestId('add-message');
     this.addError = page.getByTestId('add-error');
     this.addProgress = page.getByTestId('add-progress');
+
+    this.payStep = page.getByTestId('pay-step');
+    this.payAmount = page.getByTestId('pay-amount');
+    this.payCancelButton = this.payStep.getByRole('button', { name: TEXT.common.cancel });
+    this.paymentFrame = new PaymentFrame(page);
 
     this.startOverButton = page.getByRole('button', { name: TEXT.wallet.startOverButton, exact: true });
     this.startOverDialog = new ConfirmDialog(page.getByTestId('start-over-dialog'), {
@@ -62,10 +77,20 @@ export class WalletPage extends BasePage {
     return this.page.getByRole('radio', { name: amount });
   }
 
-  /** Picks one of the three amounts and presses Add. */
-  async addMoney(amount: AddAmount): Promise<void> {
+  /** Picks one of the three amounts and presses Add, which opens the card step. */
+  async startAdding(amount: AddAmount): Promise<void> {
     await this.amountChoice(amount).check();
     await this.addButton.click();
+  }
+
+  /**
+   * The whole top-up: pick the amount, press Add, then pay with the card that
+   * always works. Any other card is a test about the card itself, and goes
+   * through startAdding() and the payment frame instead.
+   */
+  async addMoney(amount: AddAmount): Promise<void> {
+    await this.startAdding(amount);
+    await this.paymentFrame.payWith(TEST_CARDS.works);
   }
 
   /** Presses Start over and says yes in the dialog. */

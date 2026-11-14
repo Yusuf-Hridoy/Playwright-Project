@@ -5,9 +5,17 @@
 // the same switch in js/app-links.js, keyed on the host name.
 
 import { BASE_URL } from '../config/environments';
-import { SEED } from '../config/test-settings';
+import { MARKET_CLOSED_VALUE, MARKET_PARAM, SEED } from '../config/test-settings';
 
-export type AppPage = 'login' | 'market' | 'stock' | 'portfolio' | 'watchlist' | 'wallet' | 'rules';
+export type AppPage =
+  | 'login'
+  | 'market'
+  | 'stock'
+  | 'portfolio'
+  | 'watchlist'
+  | 'wallet'
+  | 'profile'
+  | 'rules';
 
 const PAGE_FILES: Readonly<Record<AppPage, string>> = Object.freeze({
   login: 'index',
@@ -16,8 +24,15 @@ const PAGE_FILES: Readonly<Record<AppPage, string>> = Object.freeze({
   portfolio: 'portfolio',
   watchlist: 'watchlist',
   wallet: 'wallet',
+  profile: 'profile',
   rules: 'rules',
 });
+
+export interface UrlOptions {
+  /** Adds ?market=closed, the only switch that shuts the market now. */
+  readonly marketClosed?: boolean;
+  readonly baseUrl?: string;
+}
 
 export function isLocalHost(baseUrl: string = BASE_URL): boolean {
   const host = new URL(baseUrl).hostname;
@@ -34,17 +49,23 @@ export function pathFor(page: AppPage, baseUrl: string = BASE_URL): string {
 
 /**
  * The full path a test opens. Every page gets ?seed=42 so prices repeat,
- * unless a test asks for a different seed on purpose.
+ * unless a test asks for a different seed on purpose. A test that wants the
+ * market shut asks for it here, and the app then carries ?market=closed onto
+ * every link it draws.
  */
 export function urlFor(
   page: AppPage,
   query: Readonly<Record<string, string>> = {},
-  baseUrl: string = BASE_URL,
+  options: UrlOptions = {},
 ): string {
+  const baseUrl = options.baseUrl ?? BASE_URL;
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value !== '') search.set(key, value);
   }
   if (!search.has('seed')) search.set('seed', SEED);
+  if (options.marketClosed === true && !search.has(MARKET_PARAM)) {
+    search.set(MARKET_PARAM, MARKET_CLOSED_VALUE);
+  }
   return `${pathFor(page, baseUrl)}?${search.toString()}`;
 }

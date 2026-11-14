@@ -2,6 +2,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 import { TEXT } from '../data/expected-text';
 import { centsOf } from '../utils/money';
 
@@ -19,8 +20,8 @@ export class PortfolioPage extends BasePage {
   readonly sortSelect: Locator;
   readonly emptyMessage: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.heading = page.getByRole('heading', { name: TEXT.portfolio.title });
 
     this.totalWorth = page.getByTestId('stat-total-worth');

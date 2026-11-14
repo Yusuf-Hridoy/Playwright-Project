@@ -13,6 +13,8 @@ export class TopMenu {
   readonly watchlistLink: Locator;
   readonly walletLink: Locator;
   readonly rulesLink: Locator;
+  /** The circle on the right: the photo, or the initials of the display name. */
+  readonly profileLink: Locator;
 
   /** The "Market open" / "Market closed" pill. */
   readonly marketStatus: Locator;
@@ -28,6 +30,8 @@ export class TopMenu {
     this.watchlistLink = this.root.getByRole('link', { name: TEXT.menu.watchlist, exact: true });
     this.walletLink = this.root.getByRole('link', { name: TEXT.menu.wallet, exact: true });
     this.rulesLink = this.root.getByRole('link', { name: TEXT.menu.rules, exact: true });
+
+    this.profileLink = this.root.getByTestId('menu-link-profile');
 
     this.marketStatus = this.root.getByTestId('market-status');
     this.cash = this.root.getByTestId('menu-cash');
@@ -62,6 +66,15 @@ export class TopMenu {
 
   async goToWallet(): Promise<void> {
     await this.walletLink.click();
+  }
+
+  async goToProfile(): Promise<void> {
+    await this.profileLink.click();
+  }
+
+  /** The photo in the circle. There is none while the initials are showing. */
+  profilePhoto(): Locator {
+    return this.profileLink.locator('img');
   }
 
   /** The page this menu belongs to, for the odd test that needs it. */

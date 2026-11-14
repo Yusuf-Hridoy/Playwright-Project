@@ -2,6 +2,7 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
+import type { PageObjectOptions } from './base-page';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { TEXT } from '../data/expected-text';
 import { centsOf } from '../utils/money';
@@ -44,9 +45,12 @@ export class StockPage extends BasePage {
   readonly factAvgPaid: Locator;
 
   readonly notFound: Locator;
+  /** The "Couldn't load prices" box, shown when the stock list will not load. */
+  readonly loadError: Locator;
+  readonly retryButton: Locator;
 
-  constructor(page: Page) {
-    super(page);
+  constructor(page: Page, options: PageObjectOptions = {}) {
+    super(page, options);
     this.symbolHeading = page.getByTestId('stock-symbol');
     this.price = page.getByTestId('stock-price');
     this.change = page.getByTestId('stock-change');
@@ -83,6 +87,8 @@ export class StockPage extends BasePage {
     this.factAvgPaid = page.getByTestId('fact-avg-paid');
 
     this.notFound = page.getByTestId('stock-not-found');
+    this.loadError = page.getByTestId('market-error');
+    this.retryButton = page.getByRole('button', { name: TEXT.common.tryAgain });
   }
 
   protected override readyElement(): Locator {
@@ -100,6 +106,11 @@ export class StockPage extends BasePage {
     const query: Record<string, string> = { symbol };
     if (options.mode === 'sell') query['mode'] = 'sell';
     await this.open('stock', query);
+  }
+
+  /** Opens a stock without waiting for the price, for a load that will fail. */
+  async gotoExpectingTrouble(symbol: string): Promise<void> {
+    await this.openWithoutWaiting('stock', { symbol });
   }
 
   async priceCents(): Promise<number> {

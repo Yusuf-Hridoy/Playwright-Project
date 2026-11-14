@@ -22,17 +22,21 @@ import type {
   AccountState,
   AlertDirection,
   DemoAccount,
+  EmailChoices,
   HistoryEntry,
   Holding,
   PriceAlert,
+  ProfileState,
+  Theme,
   WatchlistState,
 } from '../data/demo-accounts';
-import { MAX_WATCHLIST } from '../data/demo-accounts';
+import { MAX_SECTORS, MAX_WATCHLIST, SECTORS } from '../data/demo-accounts';
 import { SYMBOLS } from '../data/stocks';
 
 export const SESSION_KEY = 'tradeloom.session';
 export const ACCOUNT_KEY_PREFIX = 'tradeloom.account.';
 export const WATCHLIST_KEY_PREFIX = 'tradeloom.watchlist.';
+export const PROFILE_KEY_PREFIX = 'tradeloom.profile.';
 
 /** Marks the one page load that wrote the state, so later loads leave it alone. */
 export const APPLIED_MARKER_KEY = 'tradeloom.test.state-applied';
@@ -46,14 +50,29 @@ export interface AlertOptions {
   readonly browser?: boolean;
 }
 
+/** Everything withProfile() can set. Anything left out keeps its saved value. */
+export interface ProfileOptions {
+  readonly photoDataUrl?: string | null;
+  readonly displayName?: string;
+  /** "YYYY-MM-DD", or "" for no date at all. */
+  readonly birthDate?: string;
+  readonly country?: string;
+  readonly sectors?: readonly string[];
+  readonly emails?: Partial<EmailChoices>;
+  readonly theme?: Theme;
+}
+
 interface Written {
   readonly sessionKey: string;
   readonly accountKey: string;
   readonly watchlistKey: string;
+  readonly profileKey: string;
   readonly markerKey: string;
   readonly email: string;
   readonly account: AccountState;
   readonly watchlist: WatchlistState;
+  /** null leaves whatever the app would write for this account. */
+  readonly profile: ProfileState | null;
 }
 
 function deepCopy<T>(value: T): T {
@@ -66,6 +85,7 @@ export class AccountStateBuilder {
   private holdings: Record<string, Holding> | null = null;
   private watchlistSymbols: string[] | null = null;
   private alerts: Record<string, PriceAlert> = {};
+  private profile: ProfileState | null = null;
   private applied = false;
 
   constructor(private readonly page: Page) {}
@@ -77,6 +97,7 @@ export class AccountStateBuilder {
     this.holdings = null;
     this.watchlistSymbols = null;
     this.alerts = {};
+    this.profile = null;
     this.applied = false;
     return this;
   }
@@ -143,6 +164,48 @@ export class AccountStateBuilder {
   }
 
   /**
+   * The saved profile, in the exact shape js/profile-storage.js keeps. Anything
+   * left out keeps the value this account starts with, so a test can change one
+   * field and say nothing about the rest:
+   *
+   *   .withProfile({ theme: 'light' })
+   *   .withProfile({ displayName: 'Mira Khan', sectors: ['Energy'] })
+   */
+  withProfile(options: ProfileOptions): this {
+    const start = deepCopy(this.requireUser().profileStart);
+    const base = this.profile ?? start;
+
+    const sectors = options.sectors === undefined ? base.sectors : [...options.sectors];
+    for (const sector of sectors) {
+      if (!SECTORS.includes(sector)) {
+        throw new Error(`There is no sector called ${sector}. The app lists ${SECTORS.join(', ')}.`);
+      }
+    }
+    if (sectors.length > MAX_SECTORS) {
+      throw new Error(`A profile holds at most ${MAX_SECTORS} sectors, but ${sectors.length} were given.`);
+    }
+    if (new Set(sectors).size !== sectors.length) {
+      throw new Error(`A profile cannot hold the same sector twice: ${sectors.join(', ')}.`);
+    }
+
+    this.profile = {
+      photoDataUrl: options.photoDataUrl === undefined ? base.photoDataUrl : options.photoDataUrl,
+      displayName: options.displayName ?? base.displayName,
+      birthDate: options.birthDate ?? base.birthDate,
+      country: options.country ?? base.country,
+      sectors,
+      emails: { ...base.emails, ...(options.emails ?? {}) },
+      theme: options.theme ?? base.theme,
+    };
+    return this;
+  }
+
+  /** The profile this builder will write, for a test that asserts on it. */
+  expectedProfile(): ProfileState {
+    return deepCopy(this.profile ?? this.requireUser().profileStart);
+  }
+
+  /**
    * Writes the state. The script runs on every page load, so it writes only on
    * the first one: a buy made during the test must survive the next page.
    */
@@ -154,6 +217,9 @@ export class AccountStateBuilder {
         window.localStorage.setItem(state.sessionKey, JSON.stringify({ email: state.email }));
         window.localStorage.setItem(state.accountKey, JSON.stringify(state.account));
         window.localStorage.setItem(state.watchlistKey, JSON.stringify(state.watchlist));
+        if (state.profile !== null) {
+          window.localStorage.setItem(state.profileKey, JSON.stringify(state.profile));
+        }
         window.sessionStorage.setItem(state.markerKey, '1');
       } catch {
         // Storage can be blocked. expectApplied() turns that into a clear failure.
@@ -220,10 +286,12 @@ export class AccountStateBuilder {
       sessionKey: SESSION_KEY,
       accountKey: `${ACCOUNT_KEY_PREFIX}${user.email}`,
       watchlistKey: `${WATCHLIST_KEY_PREFIX}${user.email}`,
+      profileKey: `${PROFILE_KEY_PREFIX}${user.email}`,
       markerKey: APPLIED_MARKER_KEY,
       email: user.email,
       account,
       watchlist: { symbols, alerts },
+      profile: this.profile === null ? null : deepCopy(this.profile),
     };
   }
 
