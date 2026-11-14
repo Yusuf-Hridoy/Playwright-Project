@@ -195,7 +195,7 @@ in the test itself, exactly what makes the file wrong.
 
 Adding money opens a card form inside an iframe. `components/payment-frame.ts`
 wraps it, and `WalletPage.addMoney('$5,000')` picks the amount, presses Add and
-pays with the test card that always works:
+pays with the test card that always work:
 
 ```ts
 await walletPage.addMoney('$5,000');
