@@ -15,7 +15,8 @@ export type AppPage =
   | 'watchlist'
   | 'wallet'
   | 'profile'
-  | 'rules';
+  | 'rules'
+  | 'receipt';
 
 const PAGE_FILES: Readonly<Record<AppPage, string>> = Object.freeze({
   login: 'index',
@@ -26,6 +27,7 @@ const PAGE_FILES: Readonly<Record<AppPage, string>> = Object.freeze({
   wallet: 'wallet',
   profile: 'profile',
   rules: 'rules',
+  receipt: 'receipt',
 });
 
 export interface UrlOptions {

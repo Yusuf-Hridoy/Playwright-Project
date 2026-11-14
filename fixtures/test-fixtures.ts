@@ -11,6 +11,7 @@ import { WalletPage } from '../pages/wallet-page';
 import { WatchlistPage } from '../pages/watchlist-page';
 import { ProfilePage } from '../pages/profile-page';
 import { RulesPage } from '../pages/rules-page';
+import { ReceiptPage } from '../pages/receipt-page';
 import { TopMenu } from '../components/top-menu';
 import { AccountStateBuilder } from '../builders/account-state-builder';
 
@@ -43,6 +44,8 @@ export interface TradeloomFixtures {
   watchlistPage: WatchlistPage;
   profilePage: ProfilePage;
   rulesPage: RulesPage;
+  /** One receipt. Usually reached through WalletPage.openReceipt() instead. */
+  receiptPage: ReceiptPage;
   topMenu: TopMenu;
   accountState: AccountStateBuilder;
   /** Freezes the clock. Nothing uses it directly; it runs on its own. */
@@ -104,6 +107,10 @@ export const test = base.extend<TradeloomOptions & TradeloomFixtures>({
 
   rulesPage: async ({ page, marketClosed }, use) => {
     await use(new RulesPage(page, { marketClosed }));
+  },
+
+  receiptPage: async ({ page, marketClosed }, use) => {
+    await use(new ReceiptPage(page, { marketClosed }));
   },
 
   topMenu: async ({ page }, use) => {

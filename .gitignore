@@ -6,3 +6,6 @@ blob-report/
 .env
 venv/
 .venv/
+
+# Snapshots written by the Playwright MCP browser, not part of the suite.
+.playwright-mcp/

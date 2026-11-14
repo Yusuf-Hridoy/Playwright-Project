@@ -1,0 +1,123 @@
+# The full run: every project, every browser, every night.
+#
+# The work is split over three shards so it finishes in a third of the time.
+# Each shard writes a blob report, and a second job glues those back into one
+# HTML report and publishes it to GitHub Pages.
+name: nightly
+
+on:
+  schedule:
+    # 20:00 UTC, which is 02:00 in Dhaka.
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Shard ${{ matrix.shard }} of 3
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      # One slow browser must not take the other shards down with it.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      # Every browser this time: the nightly run is the one that covers
+      # Firefox, WebKit and the phone project.
+      - name: Install every browser
+        run: npx playwright install --with-deps
+
+      - name: Run shard ${{ matrix.shard }}
+        run: npx playwright test --shard=${{ matrix.shard }}/3 --reporter=blob
+
+      - name: Keep this shard's blob report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  merge:
+    name: Merge the reports and publish them
+    needs: test
+    # The report is most useful on the night something broke, so it is built
+    # whether the shards passed or not.
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      - name: Collect every shard's blob report
+        uses: actions/download-artifact@v8
+        with:
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Glue them into one HTML report
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Keep the merged report when a shard failed
+        if: needs.test.result != 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-nightly
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Set GitHub Pages up
+        uses: actions/configure-pages@v6
+
+      - name: Hand the report to Pages
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: playwright-report
+
+      - name: Publish it
+        id: deploy
+        uses: actions/deploy-pages@v5

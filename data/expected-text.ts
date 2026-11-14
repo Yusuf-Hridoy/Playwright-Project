@@ -12,7 +12,6 @@ export const TEXT = Object.freeze({
     watchlist: 'Watchlist',
     wallet: 'Wallet',
     rules: 'Rules',
-    profile: 'Your profile',
     marketOpen: 'Market open',
     marketClosed: 'Market closed',
     cash: 'Cash',
@@ -82,6 +81,23 @@ export const TEXT = Object.freeze({
     download: 'Download CSV',
     historyStart: 'Starting money',
     historyAdd: 'Added practice money',
+    openReceipt: 'Open',
+
+    // The history filters.
+    filterTypeLabel: 'Type',
+    filterAllTypes: 'All types',
+    filterBuys: 'Buys',
+    filterSells: 'Sells',
+    filterTopUps: 'Top-ups',
+    filterFromLabel: 'From',
+    filterToLabel: 'To',
+    clearFilters: 'Clear filters',
+    datesBackwards: 'The From date must be on or before the To date.',
+    historyEmpty: 'No history matches these filters.',
+
+    // The page controls under the table.
+    previous: 'Previous',
+    next: 'Next',
   }),
 
   /** The card step on the Wallet page, and the form inside its frame. */
@@ -97,6 +113,32 @@ export const TEXT = Object.freeze({
     declined: 'Your card was declined. Try another card.',
     noFunds: "Your card doesn't have enough funds.",
     unknownCard: "We don't know this test card. Use one from the list.",
+    testCardsTitle: 'Test cards',
+
+    // One message per field, from js/payment-rules.js.
+    nameMissing: 'Enter the name on the card.',
+    numberBad: 'Enter a 16-digit card number.',
+    expiryBad: 'Enter a valid expiry date.',
+    expiryPast: 'This card has expired.',
+    cvcBad: 'Enter the 3-digit code on the back.',
+  }),
+
+  receipt: Object.freeze({
+    title: 'Tradeloom receipt',
+    print: 'Print',
+    backToWallet: 'Back to wallet',
+    practiceNote: 'Practice money only. Not a real receipt.',
+    notFoundTitle: 'Receipt not found',
+    notFoundBody: "We couldn't find this receipt in your history.",
+    bought: 'Bought',
+    sold: 'Sold',
+    pricePerShare: 'Price per share',
+    total: 'Total',
+    added: 'Added',
+    paidWith: 'Paid with',
+    card: 'Card',
+    startingMoney: 'Starting money',
+    cashAfter: 'Cash after',
   }),
 
   watchlist: Object.freeze({
@@ -373,4 +415,51 @@ export function historyFileName(dhakaDate: string): string {
 /** The summary above a form with problems in it. */
 export function problemsMessage(count: number): string {
   return count === 1 ? 'Fix the 1 problem below.' : `Fix the ${count} problems below.`;
+}
+
+// --- the history filters, the pages and the receipts ---
+
+/** The line under the history table, like "Showing 1 to 10 of 24". */
+export function showingText(first: number, last: number, total: number): string {
+  return `Showing ${first} to ${last} of ${total}`;
+}
+
+/** The accessible name of a numbered page button, like "Page 2". */
+export function pageButtonLabel(page: number): string {
+  return `Page ${page}`;
+}
+
+/** The accessible name of a row's Open link, like "Open receipt for Bought 20 LUMA". */
+export function receiptLinkLabel(whatText: string): string {
+  return `Open receipt for ${whatText}`;
+}
+
+/** The short What a receipt link says for a buy, like "Bought 20 LUMA". */
+export function shortBought(shares: number, symbol: string): string {
+  return `Bought ${shares} ${symbol}`;
+}
+
+/** The short What a receipt link says for a sell, like "Sold 30 TERRA". */
+export function shortSold(shares: number, symbol: string): string {
+  return `Sold ${shares} ${symbol}`;
+}
+
+/** A receipt's number, like "#TL-4821-TR-H2". The history id is upper-cased. */
+export function receiptNumber(accountId: string, historyId: string): string {
+  return `#${accountId}-${historyId.toUpperCase()}`;
+}
+
+/** The line under a receipt's number, which always ends in "Dhaka time". */
+export function receiptDate(stamp: string): string {
+  return `${stamp} Dhaka time`;
+}
+
+/** The shares line on a receipt, like "20 LUMA". */
+export function sharesOf(shares: number, symbol: string): string {
+  return `${shares} ${symbol}`;
+}
+
+/** What a top-up receipt says it was paid with, like "Card ending 4242". */
+export function cardEnding(last4: string): string {
+  return `Card ending ${last4}`;
 }

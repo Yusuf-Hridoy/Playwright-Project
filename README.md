@@ -1,15 +1,21 @@
 # Tradeloom test framework
 
+[![checks](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/checks.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/checks.yml)
+[![nightly](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/nightly.yml/badge.svg)](https://github.com/Yusuf-Hridoy/Playwright-Project/actions/workflows/nightly.yml)
+
 End-to-end tests for **Tradeloom**, a practice stock trading app, written with
 Playwright and TypeScript.
 
 The app under test is live at <https://practiceapp-six.vercel.app>. It uses
 practice money only. Nothing here touches a real account.
 
-There are **70 tests**. They cover logging in, sessions, the market, buying,
-selling, the portfolio, the wallet and its card payments, the watchlist, price
-alerts and the profile page, plus network failures, accessibility, how three
-pages look, and the app on a phone.
+There are **92 tests**. They cover logging in, sessions, the market, buying,
+selling, the portfolio, the wallet, card payments, receipts, the history
+filters and its pages, the watchlist, price alerts and the profile page, plus
+network failures, accessibility, how three pages look, and the app on a phone.
+
+The full run goes out every night and the merged report is published at
+<https://yusuf-hridoy.github.io/Playwright-Project/>.
 
 ## How the parts fit together
 
@@ -21,7 +27,7 @@ flowchart TD
         B["builders/<br/>account state builder"]
     end
 
-    T["tests/<br/>70 specs, one behaviour each"]
+    T["tests/<br/>92 specs, one behaviour each"]
     F["fixtures/<br/>test-fixtures.ts"]
     P["pages/ and components/<br/>actions and locators"]
     A["Tradeloom<br/>in a real browser"]
@@ -131,6 +137,7 @@ has to survive whichever filter is used.
 | `test-files/` | The one small photo the profile tests upload |
 | `tests/` | The specs, grouped by feature |
 | `utils/` | Money formatting, page paths, the accessibility scan and a couple of measurements |
+| `.github/` | The four CI workflows and the two small scripts they call |
 
 ## How the test data works
 
@@ -195,9 +202,29 @@ await walletPage.addMoney('$5,000');
 ```
 
 Pressing Pay starts a two second "Processing…" timer inside the frame. The
-clock is frozen, so the component moves it along with `page.clock.runFor` rather
-than waiting. The three test cards, and one the app has never heard of, are
-exported from the same file for tests about the card itself.
+clock is frozen, so nothing moves on its own. That gives a test two ways in:
+
+```ts
+await walletPage.paymentFrame.pay();              // press Pay and stop there
+await expect(walletPage.paymentFrame.processingButton).toBeVisible();
+await walletPage.paymentFrame.finishProcessing(); // let the two seconds pass
+```
+
+`payWith(cardNumber)` does both for tests that only want the result. Each field
+can be filled on its own with `fillField`, and each field's own message is read
+with `fieldError`. The three test cards, and one the app has never heard of,
+are exported from the same file.
+
+A paid top-up leaves a history row, and every history row has a receipt behind
+it. `WalletPage.openReceipt(rowIndex)` clicks the row's Open link and hands
+back the tab it opened in, which `pages/receipt-page.ts` then reads:
+
+```ts
+const tab = await walletPage.openReceipt(0);
+const receipt = new ReceiptPage(tab);
+await receipt.waitUntilReady();
+expect(await receipt.rowAmountCents('total')).toBe(70_360);
+```
 
 ## Accessibility checks
 
@@ -219,12 +246,13 @@ only when the app is really wrong, with the page, the rule id and one sentence
 saying why, and it is then skipped on that one page and nowhere else. Every
 entry is a bug to fix in the app, not a test that was made to pass.
 
-Two real problems are listed today, both in shared markup:
+**The list is empty today**, so every rule is checked on every page. The two
+problems that used to sit there were both fixed in the app:
 
-| Page | Rule | What the app does wrong |
+| Page | Rule | What the app used to do, and what it does now |
 | --- | --- | --- |
-| log in | `link-in-text-block` | The "How it works" link inside the blurb is told apart from the text around it by colour alone |
-| every signed-in page | `label-content-name-mismatch` | The profile circle shows the initials of the display name, but its `aria-label` is only "Your profile", so its visible text is not part of its accessible name |
+| log in | `link-in-text-block` | The "How it works" link inside the footer was told apart from the words around it by colour alone. Links are underlined now, in both themes. |
+| every signed-in page | `label-content-name-mismatch` | The profile circle showed the initials "TR" while its `aria-label` was only "Your profile". The label now starts with the visible text ("TR, your profile"), or with the display name when a photo leaves no visible text. |
 
 ## Visual checks
 
@@ -247,8 +275,13 @@ the seed is 42 and the account is fixed.
 **Screenshots are kept per operating system.** The same page drawn with Windows
 fonts, Mac fonts and Linux fonts is never pixel for pixel the same, so Playwright
 saves each baseline with the platform in its name, like
-`market-page-chromium-win32.png`. The baselines in this repository were made on
-Windows. Linux baselines for CI come in Phase 3.
+`market-page-chromium-win32.png`.
+
+The Windows baselines are made on a laptop with `npm run update-snapshots`. The
+Linux ones the nightly run needs are made by the **update-linux-screenshots**
+workflow, started by hand from the Actions tab; it commits only the
+`-linux.png` files. Until that has been run once, the visual tests fail on CI
+with "missing snapshot", which is expected rather than a problem with the app.
 
 After a change to the app you meant to make:
 
@@ -258,6 +291,77 @@ npm run update-snapshots
 
 Then look at the new pictures before keeping them. A baseline updated without
 looking is a check that has stopped checking.
+
+## Continuous integration
+
+Four workflows live in `.github/workflows/`. All of them run on
+`ubuntu-latest`, install with `npm ci`, and pull in only the browsers that job
+actually needs. Each one is given the smallest set of permissions that lets it
+do its job. Whenever tests fail, the HTML report is kept as an artifact for 14
+days.
+
+| Workflow | When it runs | What it does |
+| --- | --- | --- |
+| `checks.yml` | every push to `main`, every pull request | `npm run typecheck`, then the `@smoke` tests on Chromium against the live app |
+| `app-deployed.yml` | a `repository_dispatch` of type `tradeloom-deployed` from the app repo, or by hand | runs every Chromium test except `@visual` against the deployed app, and puts the result back on the app's commit |
+| `nightly.yml` | 20:00 UTC daily (02:00 Dhaka), or by hand | the whole suite, every project, in three shards, merged into one HTML report and published to GitHub Pages |
+| `update-linux-screenshots.yml` | by hand only | writes the Linux screenshot baselines and commits just the `-linux.png` files |
+
+**The nightly report is at <https://yusuf-hridoy.github.io/Playwright-Project/>.**
+It is replaced by each nightly run, so it always shows the most recent full
+pass over every browser.
+
+### How a deploy runs the tests
+
+```mermaid
+flowchart LR
+    A["Practice-App<br/>push to main"] --> V["Vercel<br/>builds and deploys"]
+    V --> N["notify-tests.yml<br/>in the app repo"]
+    N -->|"repository_dispatch<br/>tradeloom-deployed"| D["app-deployed.yml<br/>in this repo"]
+    D --> T["Chromium tests<br/>against the live app"]
+    T --> S["commit status<br/>'Playwright tests'<br/>on the app's commit"]
+```
+
+1. The app is pushed, and Vercel builds and deploys it.
+2. Vercel posts a `deployment_status` event. `notify-tests.yml`, in the app
+   repository, picks up the successful **Production** ones and sends this
+   repository a `repository_dispatch` of type `tradeloom-deployed`, carrying
+   the deployment's `app_sha` and a `base_url`.
+3. `base_url` is the stable production link rather than the deployment's own
+   URL, because Vercel can put protection in front of a per-deployment URL and
+   the tests have to be able to open it.
+4. `app-deployed.yml` marks the app's commit as pending, runs every Chromium
+   test except the visual ones against that `base_url`, and then writes the
+   final status whether the tests passed or not. A newer deploy cancels an
+   older run.
+5. The commit in **Practice-App** then shows a check called **Playwright
+   tests**, with a line like "52 passed" or "3 failed, 49 passed", linking
+   straight to the run.
+
+The same workflow can be started by hand from the Actions tab with
+`workflow_dispatch`. It takes `base_url` (which defaults to the live app) and
+`app_sha`; leaving `app_sha` empty runs the tests and writes no check.
+
+### The two secrets
+
+Only the names are ever written down. The values live in each repository's
+settings and appear nowhere in this code, in any log, or in any report.
+
+| Secret | Lives in | What it is for |
+| --- | --- | --- |
+| `TESTS_TRIGGER_TOKEN` | **Practice-App** | lets `notify-tests.yml` send this repository the `repository_dispatch` that starts a run |
+| `APP_STATUS_TOKEN` | **Playwright-Project** | lets `app-deployed.yml` write the "Playwright tests" commit status onto a Practice-App commit |
+
+Two small helpers keep the shell out of the YAML:
+`.github/scripts/set-app-status.sh` writes one commit status with `curl` and
+fails on anything but HTTP 201, and `.github/scripts/summarise-results.js`
+turns Playwright's JSON report into the one line the check shows.
+
+### What CI changes about a run
+
+`playwright.config.ts` reads `process.env.CI` and nothing else: two retries, two
+workers, and `forbidOnly` so a stray `test.only` cannot quietly shrink the
+suite. Everything else is the same as on a laptop.
 
 ## Network checks
 
@@ -327,10 +431,8 @@ test.use({ marketClosed: true });
 
 ## What is next
 
-- CI: the smoke tests on every deploy, the full suite nightly, and Linux
-  screenshot baselines to go with it.
+- The news page, the chart hover, offline mode and the idle log out.
 - API-level tests.
-- Receipts, the history filters and the history pages.
 
 ---
 

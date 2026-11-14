@@ -1,0 +1,66 @@
+# Makes the Linux screenshots the nightly run needs.
+#
+# Screenshots are per platform. A baseline taken on Windows is not the same
+# image as one taken on an Ubuntu runner, so the visual tests fail on CI with
+# "missing snapshot" until this has been run once. Start it by hand from the
+# Actions tab, then `git pull` to get the new files.
+name: update-linux-screenshots
+
+on: workflow_dispatch
+
+# This one writes: it commits the new baselines back to the branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: update-linux-screenshots
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Take the Linux screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      # The visual tests only run on Chromium.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # A run that writes a new baseline still reports the test as failed, so
+      # the files it wrote are what counts, not the exit code.
+      - name: Write the screenshots
+        continue-on-error: true
+        run: npm run update-snapshots
+
+      - name: Commit only the Linux screenshots
+        run: |
+          set -euo pipefail
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # Only the Linux baselines. A screenshot from any other platform, and
+          # anything else the run touched, is left alone.
+          git add --all -- 'tests/**/*-linux.png'
+
+          if git diff --cached --quiet; then
+            echo 'The Linux screenshots were already up to date. Nothing to commit.'
+            exit 0
+          fi
+
+          git diff --cached --name-status
+          git commit -m 'Update Linux screenshots'
+          git push origin HEAD:${{ github.ref_name }}
