@@ -24,6 +24,7 @@ export type A11yPage =
   | 'portfolio'
   | 'wallet'
   | 'watchlist'
+  | 'news'
   | 'profile'
   | 'rules';
 

@@ -49,6 +49,7 @@ test.describe('Phone layout', () => {
     portfolioPage,
     walletPage,
     watchlistPage,
+    newsPage,
     profilePage,
     page,
   }) => {
@@ -58,6 +59,7 @@ test.describe('Phone layout', () => {
       ['Portfolio', () => portfolioPage.goto()],
       ['Wallet', () => walletPage.goto()],
       ['Watchlist', () => watchlistPage.goto()],
+      ['News', () => newsPage.goto()],
       ['Profile', () => profilePage.goto()],
     ];
 

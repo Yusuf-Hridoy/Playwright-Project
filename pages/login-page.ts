@@ -10,6 +10,8 @@ export class LoginPage extends BasePage {
   readonly passwordField: Locator;
   readonly submitButton: Locator;
   readonly error: Locator;
+  /** The line the app shows after an idle log out, above the form. */
+  readonly infoMessage: Locator;
   /** The two demo account cards under the form. */
   readonly demoRows: Locator;
 
@@ -19,6 +21,7 @@ export class LoginPage extends BasePage {
     this.passwordField = page.getByLabel(TEXT.login.passwordLabel);
     this.submitButton = page.getByRole('button', { name: TEXT.login.submit });
     this.error = page.getByTestId('login-error');
+    this.infoMessage = page.getByTestId('login-info');
     this.demoRows = page.getByTestId('demo-account-row');
   }
 

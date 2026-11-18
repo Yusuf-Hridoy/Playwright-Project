@@ -27,6 +27,8 @@ export const TEXT = Object.freeze({
     use: 'Use',
     missingFields: 'Enter your email and password.',
     wrongPair: 'Wrong email or password. Try again.',
+    /** The line the log in page shows after an idle log out. */
+    idleInfo: 'You were logged out after 15 minutes of no activity.',
   }),
 
   market: Object.freeze({
@@ -225,6 +227,37 @@ export const TEXT = Object.freeze({
 
   rules: Object.freeze({
     title: 'How Tradeloom works',
+  }),
+
+  /** The news box on the Market page, and the News page itself. */
+  news: Object.freeze({
+    title: 'News',
+    boxTitle: 'Market news',
+    hide: 'Hide',
+    show: 'Show',
+    seeAll: 'See all news',
+    filterAll: 'All',
+    filterMarket: 'Market',
+    marketTag: 'Market',
+    readMore: 'Read more',
+    showLess: 'Show less',
+    loading: 'Loading more news…',
+    end: "You've reached the end.",
+    backToTop: 'Back to top',
+  }),
+
+  /** The offline banner and the two messages that go with it. */
+  connection: Object.freeze({
+    offlineBanner: "You're offline. Prices are paused and buying is turned off.",
+    blocked: "You're offline. Try again when you're back online.",
+    backOnline: "You're back online.",
+  }),
+
+  /** The warning dialog 14 minutes into doing nothing. */
+  idle: Object.freeze({
+    dialogTitle: 'Are you still there?',
+    logoutNow: 'Log out now',
+    stay: 'Stay logged in',
   }),
 });
 
@@ -462,4 +495,24 @@ export function sharesOf(shares: number, symbol: string): string {
 /** What a top-up receipt says it was paid with, like "Card ending 4242". */
 export function cardEnding(last4: string): string {
   return `Card ending ${last4}`;
+}
+
+// --- the news page, the chart hover and the idle countdown ---
+
+/** The line above the headlines, like "Showing 10 of 60". */
+export function newsCountText(shown: number, total: number): string {
+  return `Showing ${shown} of ${total}`;
+}
+
+/** What the chart's hidden status line says on each move, like "10:00, $141.92". */
+export function chartPointText(timeText: string, priceText: string): string {
+  return `${timeText}, ${priceText}`;
+}
+
+/** The countdown inside the idle warning, like "0:59". */
+export function idleCountdownText(secondsLeft: number): string {
+  const safe = Math.max(0, secondsLeft);
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }

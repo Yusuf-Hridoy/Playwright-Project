@@ -9,10 +9,12 @@ Playwright and TypeScript.
 The app under test is live at <https://practiceapp-six.vercel.app>. It uses
 practice money only. Nothing here touches a real account.
 
-There are **92 tests**. They cover logging in, sessions, the market, buying,
+There are **110 tests**. They cover logging in, sessions, the market, buying,
 selling, the portfolio, the wallet, card payments, receipts, the history
-filters and its pages, the watchlist, price alerts and the profile page, plus
-network failures, accessibility, how three pages look, and the app on a phone.
+filters and its pages, the watchlist, price alerts and the profile page, the
+news box and the News page, the chart's hover point, going offline and the
+idle log out, plus network failures, accessibility, how three pages look, and
+the app on a phone.
 
 The full run goes out every night and the merged report is published at
 <https://yusuf-hridoy.github.io/Playwright-Project/>.
@@ -27,7 +29,7 @@ flowchart TD
         B["builders/<br/>account state builder"]
     end
 
-    T["tests/<br/>92 specs, one behaviour each"]
+    T["tests/<br/>110 specs, one behaviour each"]
     F["fixtures/<br/>test-fixtures.ts"]
     P["pages/ and components/<br/>actions and locators"]
     A["Tradeloom<br/>in a real browser"]
@@ -58,7 +60,7 @@ npm test
 | `npm test` | Every test, in every project |
 | `npm run test:smoke` | The smoke tests, in all three browsers |
 | `npm run test:regression` | Every tagged test |
-| `npm run test:a11y` | The 8 accessibility checks |
+| `npm run test:a11y` | The 9 accessibility checks |
 | `npm run test:visual` | The 3 screenshot checks, in Chromium |
 | `npm run test:mobile` | The 3 phone tests, on a Pixel 7 |
 | `npm run test:cross-browser` | The smoke tests in Firefox and WebKit only |
@@ -132,12 +134,12 @@ has to survive whichever filter is used.
 | `builders/` | The account state builder, which writes an exact account into storage |
 | `fixtures/` | The `test` object every spec imports |
 | `pages/` | One page object per page of the app |
-| `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups, the card payment frame |
+| `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups, the card payment frame, the news box, the chart hover, the offline banner and the idle dialog |
 | `setup/` | Logs in once per demo account and saves the session to `.auth/` |
 | `test-files/` | The one small photo the profile tests upload |
 | `tests/` | The specs, grouped by feature |
 | `utils/` | Money formatting, page paths, the accessibility scan and a couple of measurements |
-| `.github/` | The four CI workflows and the two small scripts they call |
+| `.github/` | The three CI workflows |
 
 ## How the test data works
 
@@ -226,10 +228,69 @@ await receipt.waitUntilReady();
 expect(await receipt.rowAmountCents('total')).toBe(70_360);
 ```
 
+## News, the chart, offline and the idle log out
+
+Eighteen tests cover the four newest parts of the app. Each one leans on a
+different piece of Playwright.
+
+**The news box** (`tests/news/news-box.spec.ts`, 3 tests) is a custom element
+that draws itself inside an **open shadow root**. `getByTestId` and `getByRole`
+walk through an open boundary on their own, so the tests read like any other;
+one of them proves the boundary is really there by asking the element whether
+its `shadowRoot` exists. The box also remembers being hidden across a reload,
+and a headline in it opens that same headline on the News page, already open,
+scrolled to and focused.
+
+**The News page** (`tests/news/news-page.spec.ts`, 7 tests) loads ten headlines
+at a time as you scroll. The app watches a marker under the list with an
+`IntersectionObserver` and waits one second with `setTimeout` before the next
+ten arrive, so the tests scroll, wait for the "Loading more news…" line and then
+move the clock:
+
+```ts
+await newsPage.scrollToEnd();
+await expect(newsPage.loadingLine).toBeVisible();
+await page.clock.runFor(1_000);
+await expect(newsPage.items).toHaveCount(20);
+```
+
+They walk that loop until all 60 are on the page, and they check that the first
+headline is still **the same element** afterwards, not a rebuilt copy of itself,
+by keeping its handle and asking whether it is still connected. The rest cover
+the per-stock filter and the `?stock=` it writes into the address bar, Back,
+"Read more", "Back to top" and where it leaves the focus, and the fact that the
+same seed at the same frozen moment gives the same ten headlines while another
+seed shuffles them.
+
+**The chart's hover point** (`tests/chart/chart-hover.spec.ts`, 3 tests) is
+driven with **real mouse moves**: `hoverAt(0.5)` reads the chart's bounding box
+and moves the pointer to that share of its width. The keyboard gets the same
+point with Home, End and the arrow keys, and every keyboard move is read back
+out of the hidden status line the app keeps for screen readers. The third test
+is a guard on a bug the app has already fixed: every test starts at exactly
+10:00, which is exactly on a five minute mark, and the chart used to put its
+newest point on twice, so End read 10:00 and the left arrow read 10:00 again
+instead of 09:55.
+
+**Offline** (`tests/offline/offline.spec.ts`, 2 tests) uses
+`context.setOffline(true)`, which is what makes the app's own `online` and
+`offline` listeners fire. The banner shows, a buy is refused with the exact
+offline message, and coming back puts up a "You're back online." pop-up that
+closes itself three seconds later on the clock.
+
+**The idle log out** (`tests/idle/idle-logout.spec.ts`, 2 tests) is the one
+place where **doing nothing is the test**. Every click, key press, wheel turn
+and scroll resets the app's timer, so once the page is open these two touch
+nothing but `page.clock.runFor()`. At fourteen minutes the warning comes up and
+counts the last minute down; "Stay logged in" closes it and starts the fourteen
+minutes again. At fifteen the session goes, the log in page explains why, and
+logging back in finds the same cash. They sit on the Rules page, which has no
+price refresh of its own, so moving the clock a quarter of an hour stays cheap.
+
 ## Accessibility checks
 
 `npm run test:a11y` runs one axe-core pass per page: log in, Market, Stock,
-Portfolio, Wallet, Watchlist, Profile and Rules.
+Portfolio, Wallet, Watchlist, News, Profile and Rules.
 
 - The rules used are WCAG 2.1, levels A and AA (`wcag2a`, `wcag2aa`, `wcag21a`,
   `wcag21aa`).
@@ -294,7 +355,7 @@ looking is a check that has stopped checking.
 
 ## Continuous integration
 
-Four workflows live in `.github/workflows/`. All of them run on
+Three workflows live in `.github/workflows/`. All of them run on
 `ubuntu-latest`, install with `npm ci`, and pull in only the browsers that job
 actually needs. Each one is given the smallest set of permissions that lets it
 do its job. Whenever tests fail, the HTML report is kept as an artifact for 14
@@ -303,7 +364,6 @@ days.
 | Workflow | When it runs | What it does |
 | --- | --- | --- |
 | `checks.yml` | every push to `main`, every pull request | `npm run typecheck`, then the `@smoke` tests on Chromium against the live app |
-| `app-deployed.yml` | a `repository_dispatch` of type `tradeloom-deployed` from the app repo, or by hand | runs every Chromium test except `@visual` against the deployed app, and puts the result back on the app's commit |
 | `nightly.yml` | 20:00 UTC daily (02:00 Dhaka), or by hand | the whole suite, every project, in three shards, merged into one HTML report and published to GitHub Pages |
 | `update-linux-screenshots.yml` | by hand only | writes the Linux screenshot baselines and commits just the `-linux.png` files |
 
@@ -316,46 +376,29 @@ pass over every browser.
 ```mermaid
 flowchart LR
     A["Practice-App<br/>push to main"] --> V["Vercel<br/>builds and deploys"]
-    V --> N["notify-tests.yml<br/>in the app repo"]
-    N -->|"repository_dispatch<br/>tradeloom-deployed"| D["app-deployed.yml<br/>in this repo"]
-    D --> T["Chromium tests<br/>against the live app"]
-    T --> S["commit status<br/>'Playwright tests'<br/>on the app's commit"]
+    V --> N["run-playwright-tests.yml<br/>in the app repo"]
+    N --> C["checks this public<br/>repository out"]
+    C --> T["Chromium tests<br/>against the live app"]
 ```
 
+The app repository runs these tests itself. Nothing is sent between the two
+repositories, and no token is involved: this repository is public, so the app's
+workflow can simply check it out and run it in place.
+
 1. The app is pushed, and Vercel builds and deploys it.
-2. Vercel posts a `deployment_status` event. `notify-tests.yml`, in the app
-   repository, picks up the successful **Production** ones and sends this
-   repository a `repository_dispatch` of type `tradeloom-deployed`, carrying
-   the deployment's `app_sha` and a `base_url`.
-3. `base_url` is the stable production link rather than the deployment's own
-   URL, because Vercel can put protection in front of a per-deployment URL and
-   the tests have to be able to open it.
-4. `app-deployed.yml` marks the app's commit as pending, runs every Chromium
-   test except the visual ones against that `base_url`, and then writes the
-   final status whether the tests passed or not. A newer deploy cancels an
-   older run.
-5. The commit in **Practice-App** then shows a check called **Playwright
-   tests**, with a line like "52 passed" or "3 failed, 49 passed", linking
-   straight to the run.
+2. Vercel posts a `deployment_status` event. `run-playwright-tests.yml`, in the
+   app repository, picks up the successful **Production** ones and leaves
+   preview builds alone.
+3. That workflow checks this repository out beside the app, installs it with
+   `npm ci`, and runs every Chromium test except the visual ones.
+4. It points them at the stable production link rather than the deployment's
+   own URL, because Vercel can put protection in front of a per-deployment URL
+   and the tests have to be able to open it.
+5. The result shows on the app's own commit, as that workflow's run, and the
+   HTML report is kept as an artifact when something failed. A newer deploy
+   cancels a run that is still going.
 
-The same workflow can be started by hand from the Actions tab with
-`workflow_dispatch`. It takes `base_url` (which defaults to the live app) and
-`app_sha`; leaving `app_sha` empty runs the tests and writes no check.
-
-### The two secrets
-
-Only the names are ever written down. The values live in each repository's
-settings and appear nowhere in this code, in any log, or in any report.
-
-| Secret | Lives in | What it is for |
-| --- | --- | --- |
-| `TESTS_TRIGGER_TOKEN` | **Practice-App** | lets `notify-tests.yml` send this repository the `repository_dispatch` that starts a run |
-| `APP_STATUS_TOKEN` | **Playwright-Project** | lets `app-deployed.yml` write the "Playwright tests" commit status onto a Practice-App commit |
-
-Two small helpers keep the shell out of the YAML:
-`.github/scripts/set-app-status.sh` writes one commit status with `curl` and
-fails on anything but HTTP 201, and `.github/scripts/summarise-results.js`
-turns Playwright's JSON report into the one line the check shows.
+The same run can be started by hand from the app repository's Actions tab.
 
 ### What CI changes about a run
 
@@ -378,7 +421,7 @@ Four tests take the app's one request for its stock list,
 ## The app on a phone
 
 Three tests run in the `mobile` project only, on a Pixel 7: logging in and
-buying works at phone size, none of the six signed-in pages scrolls sideways,
+buying works at phone size, none of the seven signed-in pages scrolls sideways,
 and the alert editor sits under the watchlist instead of beside it.
 
 ## Why the results are the same on every machine
@@ -431,7 +474,7 @@ test.use({ marketClosed: true });
 
 ## What is next
 
-- The news page, the chart hover, offline mode and the idle log out.
+- The app's test switches, its API and the bugs and drift they turn up.
 - API-level tests.
 
 ---

@@ -84,6 +84,17 @@ test.describe('Every signed-in page', () => {
     expect(report.blocking, reportFor(report)).toEqual([]);
   });
 
+  test('the News page has no serious accessibility problems', {
+    tag: ['@a11y', '@regression'],
+  }, async ({ newsPage, page }) => {
+    await newsPage.goto();
+    await page.clock.resume();
+
+    const report = await scanPage(page, 'news');
+
+    expect(report.blocking, reportFor(report)).toEqual([]);
+  });
+
   test('the Profile page has no serious accessibility problems', {
     tag: ['@a11y', '@regression'],
   }, async ({ profilePage, page }) => {

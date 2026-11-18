@@ -13,6 +13,7 @@ export type AppPage =
   | 'stock'
   | 'portfolio'
   | 'watchlist'
+  | 'news'
   | 'wallet'
   | 'profile'
   | 'rules'
@@ -24,6 +25,7 @@ const PAGE_FILES: Readonly<Record<AppPage, string>> = Object.freeze({
   stock: 'stock',
   portfolio: 'portfolio',
   watchlist: 'watchlist',
+  news: 'news',
   wallet: 'wallet',
   profile: 'profile',
   rules: 'rules',

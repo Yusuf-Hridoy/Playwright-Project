@@ -9,6 +9,7 @@ import { StockPage } from '../pages/stock-page';
 import { PortfolioPage } from '../pages/portfolio-page';
 import { WalletPage } from '../pages/wallet-page';
 import { WatchlistPage } from '../pages/watchlist-page';
+import { NewsPage } from '../pages/news-page';
 import { ProfilePage } from '../pages/profile-page';
 import { RulesPage } from '../pages/rules-page';
 import { ReceiptPage } from '../pages/receipt-page';
@@ -42,6 +43,7 @@ export interface TradeloomFixtures {
   portfolioPage: PortfolioPage;
   walletPage: WalletPage;
   watchlistPage: WatchlistPage;
+  newsPage: NewsPage;
   profilePage: ProfilePage;
   rulesPage: RulesPage;
   /** One receipt. Usually reached through WalletPage.openReceipt() instead. */
@@ -99,6 +101,10 @@ export const test = base.extend<TradeloomOptions & TradeloomFixtures>({
 
   watchlistPage: async ({ page, marketClosed }, use) => {
     await use(new WatchlistPage(page, { marketClosed }));
+  },
+
+  newsPage: async ({ page, marketClosed }, use) => {
+    await use(new NewsPage(page, { marketClosed }));
   },
 
   profilePage: async ({ page, marketClosed }, use) => {

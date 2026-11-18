@@ -4,6 +4,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
 import type { PageObjectOptions } from './base-page';
+import { NewsBox } from '../components/news-box';
 import { StockRow } from '../components/stock-row';
 import { TEXT } from '../data/expected-text';
 
@@ -35,9 +36,13 @@ export class MarketPage extends BasePage {
   readonly errorBox: Locator;
   readonly retryButton: Locator;
 
+  /** The news box under the table. Everything it shows is in a shadow root. */
+  readonly newsBox: NewsBox;
+
   constructor(page: Page, options: PageObjectOptions = {}) {
     super(page, options);
     this.table = page.getByTestId('market-table');
+    this.newsBox = new NewsBox(page);
 
     this.totalWorth = page.getByTestId('stat-total-worth');
     this.todayChange = page.getByTestId('stat-today');

@@ -4,6 +4,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
 import type { PageObjectOptions } from './base-page';
 import { ConfirmDialog } from '../components/confirm-dialog';
+import { PriceChart } from '../components/price-chart';
 import { TEXT } from '../data/expected-text';
 import { centsOf } from '../utils/money';
 
@@ -43,6 +44,9 @@ export class StockPage extends BasePage {
   /** Today's facts. "You own" and "You paid on average". */
   readonly factOwned: Locator;
   readonly factAvgPaid: Locator;
+
+  /** The big chart, its hover point and the line a screen reader hears. */
+  readonly priceChart: PriceChart;
 
   readonly notFound: Locator;
   /** The "Couldn't load prices" box, shown when the stock list will not load. */
@@ -85,6 +89,8 @@ export class StockPage extends BasePage {
 
     this.factOwned = page.getByTestId('fact-owned');
     this.factAvgPaid = page.getByTestId('fact-avg-paid');
+
+    this.priceChart = new PriceChart(page);
 
     this.notFound = page.getByTestId('stock-not-found');
     this.loadError = page.getByTestId('market-error');
