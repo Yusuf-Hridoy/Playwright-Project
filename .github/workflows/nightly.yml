@@ -1,8 +1,8 @@
 # The full run: every project, every browser, every night.
 #
 # The work is split over three shards so it finishes in a third of the time.
-# Each shard writes a blob report, and a second job glues those back into one
-# HTML report and publishes it to GitHub Pages.
+# Each shard writes a blob report, a second job glues those back into one HTML
+# report, and a third job publishes that report to GitHub Pages.
 name: nightly
 
 on:
@@ -61,7 +61,7 @@ jobs:
           if-no-files-found: ignore
 
   merge:
-    name: Merge the reports and publish them
+    name: Merge the reports
     needs: test
     # The report is most useful on the night something broke, so it is built
     # whether the shards passed or not.
@@ -69,14 +69,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # This job only reads the repository. Writing to Pages is the publish
+    # job's work, and its token is the only one that can do it.
     permissions:
       contents: read
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
       - name: Check out the tests
@@ -118,6 +114,25 @@ jobs:
         with:
           path: playwright-report
 
+  publish:
+    name: Publish the report to Pages
+    needs: merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # The only job that may write to Pages, and the only one that asks for an
+    # OIDC token, which is what Pages uses to trust the deploy.
+    permissions:
+      pages: write
+      id-token: write
+
+    # GitHub shows the published address against this environment once the
+    # deploy step reports it.
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
       - name: Publish it
         id: deploy
         uses: actions/deploy-pages@v5
