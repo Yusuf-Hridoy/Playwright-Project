@@ -48,8 +48,10 @@ jobs:
       - name: Install every browser
         run: npx playwright install --with-deps
 
+      # Every project but quarantine. A quarantined test still runs, in the
+      # job below, where its result cannot turn this run red.
       - name: Run shard ${{ matrix.shard }}
-        run: npx playwright test --shard=${{ matrix.shard }}/3 --reporter=blob
+        run: npx playwright test --shard=${{ matrix.shard }}/3 --reporter=blob --grep-invert "@quarantine"
 
       - name: Keep this shard's blob report
         if: always()
@@ -94,8 +96,29 @@ jobs:
           path: all-blob-reports
           merge-multiple: true
 
+      # The three Phase 5 reporters run here, not in the shards, so the bug
+      # hunt score, the heal report and the flaky list each cover all three
+      # shards at once instead of a third of the run apiece.
       - name: Glue them into one HTML report
-        run: npx playwright merge-reports --reporter html ./all-blob-reports
+        run: npx playwright merge-reports --reporter "html,./reporters/bug-hunt-reporter.ts,./reporters/heal-reporter.ts,./reporters/flaky-reporter.ts" ./all-blob-reports
+
+      - name: Keep the heal report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: heal-report-nightly
+          path: heal-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Keep the flaky list
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: flaky-report-nightly
+          path: flaky-report/
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Keep the merged report when a shard failed
         if: needs.test.result != 'success'
@@ -113,6 +136,37 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: playwright-report
+
+  # Parked tests, on their own, where their result is shown but never counted.
+  # continue-on-error keeps a red quarantine run from turning the night red:
+  # that is the whole point of parking a test instead of deleting it.
+  quarantine:
+    name: Quarantined tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the quarantined tests
+        continue-on-error: true
+        run: npm run test:quarantine
 
   publish:
     name: Publish the report to Pages

@@ -11,14 +11,22 @@ export interface ConfirmDialogNames {
   readonly cancel: string | RegExp;
 }
 
+/**
+ * Locators the owning page object would rather supply itself, because it has
+ * a backup way of finding them. Anything left out is found the usual way.
+ */
+export interface ConfirmDialogParts {
+  readonly confirmButton?: Locator;
+}
+
 export class ConfirmDialog {
   readonly confirmButton: Locator;
   readonly cancelButton: Locator;
   /** The question at the top, like "Buy 5 KRYL?". */
   readonly title: Locator;
 
-  constructor(readonly root: Locator, names: ConfirmDialogNames) {
-    this.confirmButton = root.getByRole('button', { name: names.confirm });
+  constructor(readonly root: Locator, names: ConfirmDialogNames, parts: ConfirmDialogParts = {}) {
+    this.confirmButton = parts.confirmButton ?? root.getByRole('button', { name: names.confirm });
     this.cancelButton = root.getByRole('button', { name: names.cancel });
     this.title = root.getByRole('heading');
   }

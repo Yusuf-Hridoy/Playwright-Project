@@ -11,6 +11,8 @@
 
 import type { FrameLocator, Locator, Page } from '@playwright/test';
 import { TEXT } from '../data/expected-text';
+import { renamedTestId } from '../data/label-synonyms';
+import { healing } from '../utils/healing-locator';
 
 /** The three cards the app knows, from ../Practice-App/js/payment-rules.js. */
 export const TEST_CARDS = Object.freeze({
@@ -87,11 +89,22 @@ export class PaymentFrame {
   constructor(private readonly page: Page) {
     this.frame = page.frameLocator(`iframe[title="${TEXT.payment.frameTitle}"]`);
 
-    this.nameField = this.frame.getByLabel(TEXT.payment.nameLabel);
-    this.numberField = this.frame.getByLabel(TEXT.payment.numberLabel);
-    this.expiryField = this.frame.getByLabel(TEXT.payment.expiryLabel);
-    this.cvcField = this.frame.getByLabel(TEXT.payment.cvcLabel);
-    this.payButton = this.frame.getByRole('button', { name: /^Pay \$[\d,]+$/ });
+    // The card form carries the same switches as the page around it, so its
+    // test ids can be renamed under the test's feet as well. The labels on the
+    // four fields are not among the words the app renames, so they make good
+    // backup ways.
+    this.nameField = this.cardField('name', TEXT.payment.nameLabel, 'card-name');
+    this.numberField = this.cardField('number', TEXT.payment.numberLabel, 'card-number');
+    this.expiryField = this.cardField('expiry', TEXT.payment.expiryLabel, 'card-expiry');
+    this.cvcField = this.cardField('cvc', TEXT.payment.cvcLabel, 'card-cvc');
+    this.payButton = healing({
+      where: 'PaymentFrame',
+      element: 'Pay button',
+      ways: [
+        { how: 'role button named Pay and an amount', locator: this.frame.getByRole('button', { name: /^Pay \$[\d,]+$/ }) },
+        { how: 'renamed test id card-pay', locator: this.frame.getByTestId(renamedTestId('card-pay')) },
+      ],
+    });
     this.processingButton = this.frame.getByRole('button', { name: TEXT.payment.processing });
     this.result = this.frame.getByTestId('card-result');
 
@@ -99,6 +112,18 @@ export class PaymentFrame {
     this.numberError = this.frame.getByTestId('card-number-error');
     this.expiryError = this.frame.getByTestId('card-expiry-error');
     this.cvcError = this.frame.getByTestId('card-cvc-error');
+  }
+
+  /** One field of the card form, with its label as the backup way. */
+  private cardField(field: CardField, label: string, testId: string): Locator {
+    return healing({
+      where: 'PaymentFrame',
+      element: `${field} field`,
+      ways: [
+        { how: `label ${label}`, locator: this.frame.getByLabel(label) },
+        { how: `renamed test id ${testId}`, locator: this.frame.getByTestId(renamedTestId(testId)) },
+      ],
+    });
   }
 
   /** The input for one field, for a test that walks all four. */

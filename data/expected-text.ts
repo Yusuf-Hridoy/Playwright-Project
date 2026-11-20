@@ -40,6 +40,7 @@ export const TEXT = Object.freeze({
     filterOwned: 'I own',
     noneOwned: '-',
     clearSearch: 'Clear search',
+    trade: 'Trade',
     emptyOwned: "You don't own any stocks yet.",
     emptyHint: 'Try a different name or symbol, like KRYL.',
     errorTitle: "Couldn't load prices",
@@ -258,6 +259,37 @@ export const TEXT = Object.freeze({
     dialogTitle: 'Are you still there?',
     logoutNow: 'Log out now',
     stay: 'Stay logged in',
+  }),
+
+  /** The two popups drift=popup shows, word for word from js/ui-text.js. */
+  popups: Object.freeze({
+    cookieBody: 'We use cookies to remember your settings.',
+    cookieAccept: 'Accept',
+    cookieReject: 'Reject',
+    proTitle: 'Try Tradeloom Pro',
+    proBody: 'Get faster prices and more charts.',
+    proNoThanks: 'No thanks',
+    proLearnMore: 'Learn more',
+  }),
+
+  /**
+   * The newer wording drift=text puts on screen, word for word from
+   * DRIFT_TEXT in js/ui-text.js. Nothing in the suite is written against
+   * these: they are here so data/label-synonyms.ts has one place to copy
+   * from, and so a drift test can say what it expects to read.
+   */
+  drift: Object.freeze({
+    login: 'Sign in',
+    logout: 'Sign out',
+    market: 'Stocks',
+    searchStocks: 'Find a stock',
+    shares: 'Quantity',
+    confirmBuy: 'Yes, buy',
+    confirmSell: 'Yes, sell',
+    saveChanges: 'Update profile',
+    buyMainButton: 'Place buy order',
+    sellMainButton: 'Place sell order',
+    addButtonWord: 'Top up',
   }),
 });
 

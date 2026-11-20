@@ -4,6 +4,8 @@ import type { Locator, Page } from '@playwright/test';
 import { BasePage } from './base-page';
 import type { PageObjectOptions } from './base-page';
 import { TEXT } from '../data/expected-text';
+import { LOG_IN, renamedTestId } from '../data/label-synonyms';
+import { healing } from '../utils/healing-locator';
 
 export class LoginPage extends BasePage {
   readonly emailField: Locator;
@@ -17,9 +19,32 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page, options: PageObjectOptions = {}) {
     super(page, options);
-    this.emailField = page.getByLabel(TEXT.login.emailLabel);
-    this.passwordField = page.getByLabel(TEXT.login.passwordLabel);
-    this.submitButton = page.getByRole('button', { name: TEXT.login.submit });
+    // The three fields on the way in. Nothing else in the suite matters if
+    // these stop working, so each one has a backup way of being found.
+    this.emailField = healing({
+      where: 'LoginPage',
+      element: 'email field',
+      ways: [
+        { how: 'label Email', locator: page.getByLabel(TEXT.login.emailLabel) },
+        { how: 'renamed test id login-email', locator: page.getByTestId(renamedTestId('login-email')) },
+      ],
+    });
+    this.passwordField = healing({
+      where: 'LoginPage',
+      element: 'password field',
+      ways: [
+        { how: 'label Password', locator: page.getByLabel(TEXT.login.passwordLabel) },
+        { how: 'renamed test id login-password', locator: page.getByTestId(renamedTestId('login-password')) },
+      ],
+    });
+    this.submitButton = healing({
+      where: 'LoginPage',
+      element: 'submit button',
+      ways: [
+        { how: 'role button named Log in', locator: page.getByRole('button', { name: TEXT.login.submit }) },
+        { how: 'role button named log in or sign in', locator: page.getByRole('button', { name: LOG_IN }) },
+      ],
+    });
     this.error = page.getByTestId('login-error');
     this.infoMessage = page.getByTestId('login-info');
     this.demoRows = page.getByTestId('demo-account-row');

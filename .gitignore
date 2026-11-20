@@ -2,6 +2,11 @@ node_modules/
 test-results/
 playwright-report/
 blob-report/
+
+# Written by the Phase 5 reporters at the end of a run.
+heal-report/
+flaky-report/
+
 .auth/
 .env
 venv/

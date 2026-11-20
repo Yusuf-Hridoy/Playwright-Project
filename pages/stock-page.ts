@@ -6,6 +6,15 @@ import type { PageObjectOptions } from './base-page';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { PriceChart } from '../components/price-chart';
 import { TEXT } from '../data/expected-text';
+import {
+  CONFIRM_TRADE,
+  SHARES_FIELD,
+  TRADE_CONFIRM_HEADING,
+  TRADE_DONE_HEADING,
+  TRADE_MAIN_BUTTON,
+  renamedTestId,
+} from '../data/label-synonyms';
+import { healing } from '../utils/healing-locator';
 import { centsOf } from '../utils/money';
 
 export type TradeMode = 'buy' | 'sell';
@@ -55,35 +64,137 @@ export class StockPage extends BasePage {
 
   constructor(page: Page, options: PageObjectOptions = {}) {
     super(page, options);
-    this.symbolHeading = page.getByTestId('stock-symbol');
-    this.price = page.getByTestId('stock-price');
+    // The heading and the price are what say the page is ready, so they need
+    // backup ways as much as the trade box does.
+    this.symbolHeading = healing({
+      where: 'StockPage',
+      element: 'symbol heading',
+      ways: [
+        { how: 'test id stock-symbol', locator: page.getByTestId('stock-symbol') },
+        { how: 'the first level heading', locator: page.getByRole('heading', { level: 1 }) },
+      ],
+    });
+    this.price = healing({
+      where: 'StockPage',
+      element: 'price',
+      ways: [
+        { how: 'test id stock-price', locator: page.getByTestId('stock-price') },
+        { how: 'renamed test id stock-price', locator: page.getByTestId(renamedTestId('stock-price')) },
+      ],
+    });
     this.change = page.getByTestId('stock-change');
 
-    this.buyTab = page.getByRole('tab', { name: TEXT.stock.tabBuy });
-    this.sellTab = page.getByRole('tab', { name: TEXT.stock.tabSell });
+    this.buyTab = healing({
+      where: 'StockPage',
+      element: 'Buy tab',
+      ways: [
+        { how: 'role tab named Buy', locator: page.getByRole('tab', { name: TEXT.stock.tabBuy }) },
+        { how: 'renamed test id tab-buy', locator: page.getByTestId(renamedTestId('tab-buy')) },
+      ],
+    });
+    this.sellTab = healing({
+      where: 'StockPage',
+      element: 'Sell tab',
+      ways: [
+        { how: 'role tab named Sell', locator: page.getByRole('tab', { name: TEXT.stock.tabSell }) },
+        { how: 'renamed test id tab-sell', locator: page.getByTestId(renamedTestId('tab-sell')) },
+      ],
+    });
 
-    this.sharesField = page.getByLabel(TEXT.stock.sharesLabel);
+    this.sharesField = healing({
+      where: 'StockPage',
+      element: 'shares field',
+      ways: [
+        { how: 'label How many shares?', locator: page.getByLabel(TEXT.stock.sharesLabel) },
+        { how: 'label how many shares or quantity', locator: page.getByLabel(SHARES_FIELD) },
+      ],
+    });
     this.oneMoreButton = page.getByRole('button', { name: TEXT.stock.oneMore });
     this.oneLessButton = page.getByRole('button', { name: TEXT.stock.oneLess });
     this.maxButton = page.getByRole('button', { name: /^Max: \d+$/ });
 
     this.summaryPrice = page.getByTestId('summary-price');
     this.summaryShares = page.getByTestId('summary-shares');
-    this.summaryTotal = page.getByTestId('summary-total');
+    this.summaryTotal = healing({
+      where: 'StockPage',
+      element: 'summary total',
+      ways: [
+        { how: 'test id summary-total', locator: page.getByTestId('summary-total') },
+        { how: 'renamed test id summary-total', locator: page.getByTestId(renamedTestId('summary-total')) },
+      ],
+    });
     this.summaryCashAfter = page.getByTestId('summary-cash-after');
 
     // The button names itself after what it will do, like "Buy 5 KRYL".
-    this.submitButton = page.getByRole('button', { name: /^(Buy|Sell) \d+ [A-Z]+$/ });
+    this.submitButton = healing({
+      where: 'StockPage',
+      element: 'main trade button',
+      ways: [
+        {
+          how: 'role button named Buy or Sell with a number',
+          locator: page.getByRole('button', { name: /^(Buy|Sell) \d+ [A-Z]+$/ }),
+        },
+        { how: 'role button named buy, sell or place order', locator: page.getByRole('button', { name: TRADE_MAIN_BUTTON }) },
+      ],
+    });
     this.error = page.getByTestId('trade-error');
     this.closedBanner = page.getByTestId('trade-closed-banner');
 
-    this.confirmDialog = new ConfirmDialog(page.getByTestId('confirm-dialog'), {
-      confirm: new RegExp(`^(${TEXT.stock.confirmBuy}|${TEXT.stock.confirmSell})$`),
-      cancel: TEXT.common.cancel,
+    const confirmRoot = healing({
+      where: 'StockPage',
+      element: 'confirm box',
+      ways: [
+        { how: 'test id confirm-dialog', locator: page.getByTestId('confirm-dialog') },
+        {
+          how: 'the dialog asking to buy or sell a number of shares',
+          locator: page
+            .getByRole('dialog')
+            .filter({ has: page.getByRole('heading', { name: TRADE_CONFIRM_HEADING }) }),
+        },
+      ],
     });
+    this.confirmDialog = new ConfirmDialog(
+      confirmRoot,
+      {
+        confirm: new RegExp(`^(${TEXT.stock.confirmBuy}|${TEXT.stock.confirmSell})$`),
+        cancel: TEXT.common.cancel,
+      },
+      {
+        confirmButton: healing({
+          where: 'StockPage',
+          element: 'confirm button',
+          ways: [
+            {
+              how: 'role button named Confirm buy or Confirm sell',
+              locator: confirmRoot.getByRole('button', {
+                name: new RegExp(`^(${TEXT.stock.confirmBuy}|${TEXT.stock.confirmSell})$`),
+              }),
+            },
+            {
+              how: 'role button that confirms a buy or a sell, old wording or new',
+              locator: confirmRoot.getByRole('button', { name: CONFIRM_TRADE }),
+            },
+          ],
+        }),
+      },
+    );
 
-    this.success = page.getByTestId('trade-success');
-    this.successTitle = page.getByTestId('success-title');
+    this.success = healing({
+      where: 'StockPage',
+      element: 'success box',
+      ways: [
+        { how: 'test id trade-success', locator: page.getByTestId('trade-success') },
+        { how: 'renamed test id trade-success', locator: page.getByTestId(renamedTestId('trade-success')) },
+      ],
+    });
+    this.successTitle = healing({
+      where: 'StockPage',
+      element: 'success title',
+      ways: [
+        { how: 'test id success-title', locator: page.getByTestId('success-title') },
+        { how: 'the heading that says Bought or Sold', locator: page.getByRole('heading', { name: TRADE_DONE_HEADING }) },
+      ],
+    });
     this.successDetail = page.getByTestId('success-detail');
     this.tradeAgainButton = page.getByRole('button', { name: TEXT.stock.makeAnotherTrade });
 
@@ -117,6 +228,23 @@ export class StockPage extends BasePage {
   /** Opens a stock without waiting for the price, for a load that will fail. */
   async gotoExpectingTrouble(symbol: string): Promise<void> {
     await this.openWithoutWaiting('stock', { symbol });
+  }
+
+  /**
+   * Opens a stock and comes straight back, for a slow app whose price only
+   * arrives once the clock is moved on.
+   */
+  async gotoWhileLoading(symbol: string): Promise<void> {
+    await this.page.goto(this.urlFor('stock', { symbol }), { waitUntil: 'commit' });
+  }
+
+  /**
+   * The price, but only once there is a real figure in it. While the app is
+   * still loading the same element reads "-", so this matches nothing, which
+   * is what makes it something a test can wait for.
+   */
+  priceOnceLoaded(): Locator {
+    return this.price.filter({ hasNotText: TEXT.common.placeholder });
   }
 
   async priceCents(): Promise<number> {

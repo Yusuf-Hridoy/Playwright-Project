@@ -2,6 +2,7 @@ import { test, expect } from '../../fixtures/test-fixtures';
 import { NEWBIE, TRADER } from '../../data/demo-accounts';
 import { STOCKS, SYMBOLS, STOCK_COUNT } from '../../data/stocks';
 import { TEXT, marketClosed, sharesWord } from '../../data/expected-text';
+import { expectSearchFindsOnly } from '../../checks/market-checks';
 
 test.describe('The market, seen by someone who owns stocks', () => {
   test.use({ storageState: TRADER.storageState });
@@ -27,10 +28,9 @@ test.describe('The market, seen by someone who owns stocks', () => {
   test('searching for "robot" leaves only Kryl Robotics', { tag: ['@regression'] }, async ({ marketPage }) => {
     await marketPage.goto();
 
-    await marketPage.search('robot');
-
-    await expect(marketPage.visibleRows()).toHaveCount(1);
-    expect(await marketPage.visibleSymbols()).toEqual(['KRYL']);
+    // The same check the bug hunt makes with bug=search switched on, which
+    // only matches when the letter case is exact.
+    await expectSearchFindsOnly(marketPage, 'robot', ['KRYL']);
   });
 
   test('the same seed and the same time give the same prices after a reload', { tag: ['@regression'] }, async ({

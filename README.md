@@ -9,12 +9,18 @@ Playwright and TypeScript.
 The app under test is live at <https://practiceapp-six.vercel.app>. It uses
 practice money only. Nothing here touches a real account.
 
-There are **110 tests**. They cover logging in, sessions, the market, buying,
-selling, the portfolio, the wallet, card payments, receipts, the history
-filters and its pages, the watchlist, price alerts and the profile page, the
-news box and the News page, the chart's hover point, going offline and the
-idle log out, plus network failures, accessibility, how three pages look, and
-the app on a phone.
+There are **130 tests**. 111 of them are the everyday suite: logging in,
+sessions, the market, buying, selling, the portfolio, the wallet, card
+payments, receipts, the history filters and its pages, the watchlist, price
+alerts and the profile page, the news box and the News page, the chart's hover
+point, going offline and the idle log out, plus network failures,
+accessibility, how three pages look, and the app on a phone.
+
+The other 19 are about the suite itself rather than the app: they switch the
+app's own bugs on to prove the everyday tests would catch them, rename and
+move the whole interface to prove the important journeys still pass, and make
+the app slow and unreliable to prove the tests wait properly. See
+[Resilience](#resilience).
 
 The full run goes out every night and the merged report is published at
 <https://yusuf-hridoy.github.io/Playwright-Project/>.
@@ -29,7 +35,7 @@ flowchart TD
         B["builders/<br/>account state builder"]
     end
 
-    T["tests/<br/>110 specs, one behaviour each"]
+    T["tests/<br/>130 specs, one behaviour each"]
     F["fixtures/<br/>test-fixtures.ts"]
     P["pages/ and components/<br/>actions and locators"]
     A["Tradeloom<br/>in a real browser"]
@@ -64,6 +70,10 @@ npm test
 | `npm run test:visual` | The 3 screenshot checks, in Chromium |
 | `npm run test:mobile` | The 3 phone tests, on a Pixel 7 |
 | `npm run test:cross-browser` | The smoke tests in Firefox and WebKit only |
+| `npm run test:bug-hunt` | The 5 bug-hunt tests, and the score at the end |
+| `npm run test:drift` | The 9 self-healing tests, and the heal report |
+| `npm run test:resilience` | The 5 slow and flaky tests |
+| `npm run test:quarantine` | Whatever is parked in quarantine right now |
 | `npm run update-snapshots` | Writes new screenshot baselines for this machine |
 | `npm run test:headed` | The same, with a browser you can watch |
 | `npm run report` | Opens the HTML report of the last run |
@@ -103,6 +113,14 @@ first line.
 | `firefox` | Desktop Firefox | `@smoke` only |
 | `webkit` | Desktop Safari | `@smoke` only |
 | `mobile` | Pixel 7 | `@mobile` only |
+| `bug-hunt` | Desktop Chrome | `@bug-hunt` only: the app's own bugs, switched on |
+| `drift` | Desktop Chrome | `@drift` only: the app renamed, re-idded and moved |
+| `resilience` | Desktop Chrome | `@resilience` only: a slow app and a flaky one |
+| `quarantine` | Desktop Chrome | `@quarantine` only, with no retries |
+
+`chromium` leaves out `@mobile`, `@bug-hunt`, `@drift`, `@resilience` and
+`@quarantine`, so each of those areas runs in the one project built for it and
+nowhere else.
 
 Every project depends on `setup`, and every project shares the same locale,
 time zone, base URL and test id attribute. Only the device changes.
@@ -121,6 +139,10 @@ takes three times as long gets run three times less often.
 | `@visual` | A screenshot compared against a baseline |
 | `@network` | A test that holds back, breaks or rewrites a request |
 | `@mobile` | A phone test, run only in the `mobile` project |
+| `@bug-hunt` | One of the app's bugs, switched on against a shared check |
+| `@drift` | A journey run against a renamed, re-idded, moved app |
+| `@resilience` | A slow app, or one that drops the odd request |
+| `@quarantine` | Parked: it runs, but it cannot turn the main run red |
 
 The log in setup carries every tag, because each project depends on it and it
 has to survive whichever filter is used.
@@ -130,7 +152,7 @@ has to survive whichever filter is used.
 | Folder | What lives there |
 | --- | --- |
 | `config/` | Which site to test, and the seed, clock, locale and time zone |
-| `data/` | The demo accounts, the 8 stocks, every message a test checks, and the known accessibility issues |
+| `data/` | The demo accounts, the 8 stocks, every message a test checks, the renamed labels, the flaky seeds and the known accessibility issues |
 | `builders/` | The account state builder, which writes an exact account into storage |
 | `fixtures/` | The `test` object every spec imports |
 | `pages/` | One page object per page of the app |
@@ -138,7 +160,9 @@ has to survive whichever filter is used.
 | `setup/` | Logs in once per demo account and saves the session to `.auth/` |
 | `test-files/` | The one small photo the profile tests upload |
 | `tests/` | The specs, grouped by feature |
-| `utils/` | Money formatting, page paths, the accessibility scan and a couple of measurements |
+| `checks/` | Checks shared by an everyday test and its bug-hunt twin |
+| `reporters/` | The bug-hunt score, the heal report and the flaky list |
+| `utils/` | Money formatting, page paths, the frozen clock, backup locators, the accessibility scan and a couple of measurements |
 | `.github/` | The three CI workflows |
 
 ## How the test data works
@@ -287,6 +311,167 @@ minutes again. At fifteen the session goes, the log in page explains why, and
 logging back in finds the same cash. They sit on the Rules page, which has no
 price refresh of its own, so moving the clock a quarter of an hour stays cheap.
 
+## Resilience
+
+Four questions about the suite itself, rather than about the app.
+
+### Bug hunt
+
+**What it proves.** A test that still passes against a broken app is worse
+than no test, because it reads as proof that the app is fine. The app has five
+bugs that can be switched on from the link (`?bug=cost`), and each one has a
+test here that runs the very check the everyday suite runs, with that bug on.
+
+Each check lives in `checks/`, and both tests call it: the everyday test on a
+healthy app, the bug-hunt test on a broken one. That is what makes the result
+mean something. A check written only for the bug hunt would prove nothing
+about the tests that run every day.
+
+| Bug | What the app gets wrong | The shared check, and the everyday test that calls it |
+| --- | --- | --- |
+| `cost` | From two shares up, the total charges for one share too many | `expectBuyTotalIsRight` — *buying 5 KRYL takes the same cash in the summary, the message and the menu* |
+| `gain` | Every gain is shown with the sign turned round | `expectEachGainIsRight` — *total worth is the cash plus every holding at today price* |
+| `limit` | Top-ups run on to $60,000 while the note still says $50,000 | `expectTopUpsStopAtTheLimit` — *top-ups stop once the account has added $50,000 in all* |
+| `sort` | "Sort by gain" puts the smallest gain first | `expectSortByGainPutsTheBiggestFirst` — *"Sort by gain" puts the biggest gain at the top* |
+| `search` | The search box insists on the exact letter case | `expectSearchFindsOnly` — *searching for "robot" leaves only Kryl Robotics* |
+
+**How to run it.** `npm run test:bug-hunt`.
+
+**How to read the score.** Every bug-hunt test is marked `test.fail()`, so
+Playwright reads it the other way round from every other test here:
+
+- **green** — the check failed, so the bug was caught. That is the good result.
+- **red**, with *"expected to fail, but passed"* — the bug slipped through.
+  The everyday test that shares that check has stopped checking what its name
+  says it checks.
+
+At the end of the run one line sums it up, and on CI the same line goes into
+the job summary:
+
+```
+Bugs caught: 5 of 5
+```
+
+Anything less than 5, and the bugs that got through are named.
+
+### Self-healing
+
+**What it proves.** Interfaces get renamed. A button that said "Log in" last
+month says "Sign in" today, the test ids all change at once, the layout moves,
+and a cookie banner appears over the lot. The journeys that matter should keep
+working, and somebody should be told which locators are now living in the past.
+
+**How backup locators work.** A page object hands `healing()` an ordered list
+of ways to find one element:
+
+```ts
+this.submitButton = healing({
+  where: 'LoginPage',
+  element: 'submit button',
+  ways: [
+    { how: 'role button named Log in', locator: page.getByRole('button', { name: TEXT.login.submit }) },
+    { how: 'role button named log in or sign in', locator: page.getByRole('button', { name: LOG_IN }) },
+  ],
+});
+```
+
+The first way is always today's normal locator, so a normal run behaves exactly
+as it did before. When it finds nothing, the helper waits for any of the ways,
+works out which one actually matched, and notes it against the running test.
+What it hands back is an ordinary `Locator`: tests and page objects use it
+with `expect()` and `click()` as usual.
+
+The renamed wording lives in one place, `data/label-synonyms.ts` — the list a
+team keeps when the product changes its mind about a word.
+
+**Which elements have backups.** Only the critical path: the log in fields, the
+top menu, the market search and its rows, the trade box from the shares field
+to the success message, the holdings rows, and the whole top-up through the
+card frame. Plus the handful of elements each page waits on to call itself
+ready, because a page object that cannot tell the page has loaded never gets
+as far as the interesting part.
+
+**The popups.** With `drift=popup` the app shows a cookie banner and a "Try
+Tradeloom Pro" dialog. `fixtures/popup-handlers.ts` registers two
+`addLocatorHandler` handlers that close them, and only for the `drift` project.
+In every other project a popup that turns up on its own should fail the test it
+interrupted, because that would mean the app really changed.
+
+**How to read the heal report.** `npm run test:drift` writes
+`heal-report/heal-report.md` (and `.json` for tools):
+
+| Page object | Element | What failed | What worked | Tests |
+| --- | --- | --- | --- | --- |
+| LoginPage | submit button | role button named Log in | role button named log in or sign in | 2 |
+
+Every row is a locator to update. Healing is a warning, never a fix: the suite
+keeps running so the night is not wasted, and the row says what to put right in
+the morning.
+
+**Why a heal in a normal run matters.** In the `drift` project a heal is the
+exercise working. Anywhere else it means the real app has moved and nobody
+noticed, so the report puts a line at the top:
+
+> Healing happened in a normal run. The app may have changed: check these
+> locators.
+
+### Slow and flaky
+
+**What the tests show.** With `slow=3000` every data load in the app waits
+three seconds, and the loads are one after another, not all at once. Three
+tests show the Market page working through its loading state to all eight
+stocks, a buy going through from end to end, and the Portfolio filling in. Two
+more turn on `flaky=on` with a seed where the stock list is certain to fail the
+first time: the error box shows, "Try again" brings the stocks back, and a
+second page opened from scratch does exactly the same thing in the same order.
+
+**How `advanceUntil` works.** The clock is frozen for every test here, so a
+three second wait in the app never ends on its own. One big
+`page.clock.runFor(10_000)` does not work either: the second load is only
+started once the first has finished, so the clock runs past a timer that has
+not been made yet. `advanceUntil(page, locator)` moves the clock half a second
+at a time and looks at the page after each step, until the locator is on screen
+or 30 seconds of the app's own time have gone by, and then says so clearly.
+
+Each look is a short ordinary wait on the locator rather than a glance, because
+the app's slow switch is a timer in front of a real request: moving the clock
+starts the request, and the answer still has to travel the real internet.
+
+The seed for the flaky tests is in `data/resilience-seeds.ts`, with a note on
+how it was found and how to find another if the app's rule changes.
+
+### Quarantine
+
+**What it is for.** One test that fails every other night teaches a team to
+ignore red runs, and then a real failure goes unnoticed too. A quarantined test
+still runs and is still reported, but its result cannot turn the main run red.
+
+**How to quarantine a test.** Add the tag:
+
+```ts
+test('the thing that keeps falling over', { tag: ['@quarantine'] }, async ({ marketPage }) => {
+```
+
+That one word moves it out of `chromium`, `firefox`, `webkit` and `mobile`, and
+into the `quarantine` project, which runs with `retries: 0` — a retry would
+only hide how unsteady the test is, which is the one thing quarantine exists to
+show. In the nightly the shards skip it and a separate job runs
+`npm run test:quarantine` with `continue-on-error: true`.
+
+**How to release it.** Fix the test, delete the `@quarantine` tag, and it goes
+straight back into the everyday projects. Nothing else to undo.
+
+**Nothing is quarantined today.** The `quarantine` project runs the log in
+setup and nothing else.
+
+**The flaky list.** A test that fails and then passes on a retry is the most
+expensive kind to ignore: the run goes green and nobody looks.
+`reporters/flaky-reporter.ts` collects them at the end of every run and writes
+`flaky-report/flaky-report.md` with the test, the file, the project and how
+many goes it took. On CI the same list goes into the job summary, or the line
+`No flaky tests in this run.` Both report folders are in `.gitignore` and are
+uploaded as artifacts by the nightly.
+
 ## Accessibility checks
 
 `npm run test:a11y` runs one axe-core pass per page: log in, Market, Stock,
@@ -364,7 +549,7 @@ days.
 | Workflow | When it runs | What it does |
 | --- | --- | --- |
 | `checks.yml` | every push to `main`, every pull request | `npm run typecheck`, then the `@smoke` tests on Chromium against the live app |
-| `nightly.yml` | 20:00 UTC daily (02:00 Dhaka), or by hand | the whole suite, every project, in three shards, merged into one HTML report and published to GitHub Pages |
+| `nightly.yml` | 20:00 UTC daily (02:00 Dhaka), or by hand | the whole suite, every project but `quarantine`, in three shards, merged into one HTML report and published to GitHub Pages; quarantine runs in a job of its own that is allowed to fail |
 | `update-linux-screenshots.yml` | by hand only | writes the Linux screenshot baselines and commits just the `-linux.png` files |
 
 **The nightly report is at <https://yusuf-hridoy.github.io/Playwright-Project/>.**

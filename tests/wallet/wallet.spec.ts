@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '../../fixtures/test-fixtures';
-import { ADD_CHOICES_CENTS, ADD_LIMIT_CENTS, NEWBIE, TRADER } from '../../data/demo-accounts';
-import { PAYING_CARD_LAST4 } from '../../components/payment-frame';
-import { addLimitReached, addedWithCard, historyFileName } from '../../data/expected-text';
+import { NEWBIE, TRADER } from '../../data/demo-accounts';
+import { historyFileName } from '../../data/expected-text';
 import { MARKET_DAY } from '../../config/test-settings';
 import { money } from '../../utils/money';
+import { expectTopUpsStopAtTheLimit } from '../../checks/wallet-checks';
 
 test.describe('Adding practice money', () => {
   test.use({ storageState: NEWBIE.storageState });
@@ -12,32 +12,11 @@ test.describe('Adding practice money', () => {
   test('top-ups stop once the account has added $50,000 in all', { tag: ['@regression'] }, async ({
     walletPage,
   }) => {
-    const stepCents = ADD_CHOICES_CENTS['10000'];
-    let cashCents = NEWBIE.start.cashCents;
-    let addedCents = NEWBIE.start.totalAddedCents;
-
     await walletPage.goto();
 
-    while (addedCents + stepCents <= ADD_LIMIT_CENTS) {
-      cashCents += stepCents;
-      addedCents += stepCents;
-
-      await walletPage.addMoney('$10,000');
-
-      await expect(walletPage.addMessage).toHaveText(
-        addedWithCard('$10,000', PAYING_CARD_LAST4, money(cashCents)),
-      );
-      await expect(walletPage.cash).toHaveAttribute('data-cents', String(cashCents));
-    }
-
-    await test.step('one more top-up is refused before the card step opens', async () => {
-      await walletPage.startAdding('$10,000');
-
-      await expect(walletPage.addError).toHaveText(addLimitReached());
-      await expect(walletPage.payStep).toBeHidden();
-      await expect(walletPage.addMessage).toBeEmpty();
-      await expect(walletPage.cash).toHaveAttribute('data-cents', String(cashCents));
-    });
+    // The same check the bug hunt makes with bug=limit switched on, which lets
+    // one more top-up through than the rule allows.
+    await expectTopUpsStopAtTheLimit(walletPage, NEWBIE);
   });
 });
 

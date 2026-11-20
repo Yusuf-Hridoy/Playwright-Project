@@ -4,6 +4,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { BasePage } from './base-page';
 import type { PageObjectOptions } from './base-page';
 import { TEXT } from '../data/expected-text';
+import { renamedTestId } from '../data/label-synonyms';
+import { healing } from '../utils/healing-locator';
 import { centsOf } from '../utils/money';
 
 export type HoldingSort = 'gain' | 'value' | 'name';
@@ -27,7 +29,16 @@ export class PortfolioPage extends BasePage {
     this.totalWorth = page.getByTestId('stat-total-worth');
     this.cash = page.getByTestId('stat-cash');
     this.stocksWorth = page.getByTestId('stat-stocks-worth');
-    this.totalGain = page.getByTestId('stat-total-gain');
+    // Total gain is the last card filled in, which is what says the page is
+    // ready, so it needs a backup way too.
+    this.totalGain = healing({
+      where: 'PortfolioPage',
+      element: 'total gain card',
+      ways: [
+        { how: 'test id stat-total-gain', locator: page.getByTestId('stat-total-gain') },
+        { how: 'renamed test id stat-total-gain', locator: page.getByTestId(renamedTestId('stat-total-gain')) },
+      ],
+    });
 
     this.sortSelect = page.getByLabel(TEXT.portfolio.sortLabel);
     this.emptyMessage = page.getByTestId('portfolio-empty');
@@ -55,9 +66,28 @@ export class PortfolioPage extends BasePage {
     await this.openWithoutWaiting('portfolio');
   }
 
+  /**
+   * Opens the Portfolio and comes straight back, for a slow app whose rows
+   * only arrive once the clock is moved on.
+   */
+  async gotoWhileLoading(): Promise<void> {
+    await this.page.goto(this.urlFor('portfolio'), { waitUntil: 'commit' });
+  }
+
   /** One holding's row, found by the symbol the app marks it with. */
   row(symbol: string): Locator {
-    return this.page.getByTestId('holding-row').and(this.page.locator(`[data-symbol="${symbol}"]`));
+    return healing({
+      where: 'PortfolioPage',
+      element: `${symbol} holding row`,
+      ways: [
+        {
+          how: 'test id holding-row with data-symbol',
+          locator: this.page.getByTestId('holding-row').and(this.page.locator(`[data-symbol="${symbol}"]`)),
+        },
+        // Only one row of the holdings table mentions this symbol.
+        { how: 'the table row that mentions the symbol', locator: this.page.getByRole('row').filter({ hasText: symbol }) },
+      ],
+    });
   }
 
   allRows(): Locator {
@@ -65,7 +95,16 @@ export class PortfolioPage extends BasePage {
   }
 
   shares(symbol: string): Locator {
-    return this.row(symbol).getByTestId('holding-shares');
+    const row = this.row(symbol);
+    return healing({
+      where: 'PortfolioPage',
+      element: `${symbol} shares`,
+      ways: [
+        { how: 'test id holding-shares', locator: row.getByTestId('holding-shares') },
+        // The only cell in the row that counts something in shares.
+        { how: 'the cell in the row that reads a number of shares', locator: row.getByRole('cell', { name: /^\d+ shares?$/ }) },
+      ],
+    });
   }
 
   price(symbol: string): Locator {
@@ -98,6 +137,20 @@ export class PortfolioPage extends BasePage {
 
   async sortBy(how: HoldingSort): Promise<void> {
     await this.sortSelect.selectOption(how);
+  }
+
+  async gainCents(symbol: string): Promise<number> {
+    return centsOf(this.gain(symbol));
+  }
+
+  /**
+   * Every row's gain in whole cents, in the order the table shows them. Read
+   * in one go, so the figures all come from the same drawn table.
+   */
+  async gainsInOrder(): Promise<number[]> {
+    return this.allRows()
+      .getByTestId('holding-gain')
+      .evaluateAll((cells) => cells.map((cell) => Number(cell.getAttribute('data-cents'))));
   }
 
   /** The symbols of the rows, in the order the table shows them. */

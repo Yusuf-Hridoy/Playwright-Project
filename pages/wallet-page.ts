@@ -7,6 +7,8 @@ import type { PageObjectOptions } from './base-page';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { PaymentFrame, TEST_CARDS } from '../components/payment-frame';
 import { TEXT } from '../data/expected-text';
+import { ADD_MONEY_BUTTON, renamedTestId } from '../data/label-synonyms';
+import { healing } from '../utils/healing-locator';
 import { centsOf } from '../utils/money';
 
 /** The three top-up buttons, written the way the app writes them. */
@@ -65,10 +67,25 @@ export class WalletPage extends BasePage {
   constructor(page: Page, options: PageObjectOptions = {}) {
     super(page, options);
     this.heading = page.getByRole('heading', { name: TEXT.wallet.title });
-    this.cash = page.getByTestId('wallet-cash');
+    // The cash figure is what says the page is ready.
+    this.cash = healing({
+      where: 'WalletPage',
+      element: 'cash figure',
+      ways: [
+        { how: 'test id wallet-cash', locator: page.getByTestId('wallet-cash') },
+        { how: 'renamed test id wallet-cash', locator: page.getByTestId(renamedTestId('wallet-cash')) },
+      ],
+    });
 
     // The button names the amount it will add, like "Add $5,000".
-    this.addButton = page.getByRole('button', { name: /^Add \$[\d,]+$/ });
+    this.addButton = healing({
+      where: 'WalletPage',
+      element: 'Add button',
+      ways: [
+        { how: 'role button named Add and an amount', locator: page.getByRole('button', { name: /^Add \$[\d,]+$/ }) },
+        { how: 'role button named add or top up and an amount', locator: page.getByRole('button', { name: ADD_MONEY_BUTTON }) },
+      ],
+    });
     this.addMessage = page.getByTestId('add-message');
     this.addError = page.getByTestId('add-error');
     this.addProgress = page.getByTestId('add-progress');
@@ -120,8 +137,23 @@ export class WalletPage extends BasePage {
     return centsOf(this.cash);
   }
 
+  /** The test id the app marks each amount with, as in add-amount-1000. */
+  private amountTestId(amount: AddAmount): string {
+    return `add-amount-${amount.replace(/[$,]/g, '')}`;
+  }
+
   amountChoice(amount: AddAmount): Locator {
-    return this.page.getByRole('radio', { name: amount });
+    return healing({
+      where: 'WalletPage',
+      element: `${amount} choice`,
+      ways: [
+        { how: 'role radio named after the amount', locator: this.page.getByRole('radio', { name: amount }) },
+        {
+          how: 'renamed test id add-amount',
+          locator: this.page.getByTestId(renamedTestId(this.amountTestId(amount))),
+        },
+      ],
+    });
   }
 
   /** Picks one of the three amounts and presses Add, which opens the card step. */

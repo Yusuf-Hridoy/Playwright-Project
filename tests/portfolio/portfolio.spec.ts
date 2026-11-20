@@ -1,7 +1,11 @@
 import { test, expect } from '../../fixtures/test-fixtures';
-import { NEWBIE, TRADER } from '../../data/demo-accounts';
+import { BUSY, NEWBIE, TRADER } from '../../data/demo-accounts';
 import { TEXT, portfolioEmptyBody } from '../../data/expected-text';
 import { money } from '../../utils/money';
+import {
+  expectEachGainIsRight,
+  expectSortByGainPutsTheBiggestFirst,
+} from '../../checks/portfolio-checks';
 
 test.describe('A portfolio with stocks in it', () => {
   test.use({ storageState: TRADER.storageState });
@@ -26,6 +30,25 @@ test.describe('A portfolio with stocks in it', () => {
     expect(await portfolioPage.totalWorthCents()).toBe(totalCents);
     await expect(portfolioPage.totalWorth).toHaveText(money(totalCents));
     await expect(portfolioPage.stocksWorth).toHaveText(money(stocksWorthCents));
+
+    // The same check the bug hunt makes with bug=gain switched on, which shows
+    // every gain with the sign turned round.
+    await expectEachGainIsRight(portfolioPage, TRADER.start.holdings);
+  });
+});
+
+test.describe('Sorting a portfolio', () => {
+  // Seven holdings, so there is a real order to get wrong.
+  test.use({ storageState: BUSY.storageState });
+
+  test('"Sort by gain" puts the biggest gain at the top', { tag: ['@regression'] }, async ({
+    portfolioPage,
+  }) => {
+    await portfolioPage.goto();
+
+    // The same check the bug hunt makes with bug=sort switched on, which puts
+    // the smallest gain first instead.
+    await expectSortByGainPutsTheBiggestFirst(portfolioPage);
   });
 });
 

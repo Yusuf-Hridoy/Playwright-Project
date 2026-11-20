@@ -7,6 +7,8 @@ import type { PageObjectOptions } from './base-page';
 import { NewsBox } from '../components/news-box';
 import { StockRow } from '../components/stock-row';
 import { TEXT } from '../data/expected-text';
+import { SEARCH_STOCKS, renamedTestId } from '../data/label-synonyms';
+import { healing } from '../utils/healing-locator';
 
 export class MarketPage extends BasePage {
   readonly table: Locator;
@@ -41,14 +43,37 @@ export class MarketPage extends BasePage {
 
   constructor(page: Page, options: PageObjectOptions = {}) {
     super(page, options);
-    this.table = page.getByTestId('market-table');
+    // The table is what says the page has finished drawing itself, so it
+    // needs a backup way as much as anything a test clicks.
+    this.table = healing({
+      where: 'MarketPage',
+      element: 'stock table',
+      ways: [
+        { how: 'test id market-table', locator: page.getByTestId('market-table') },
+        { how: 'the only table on the page', locator: page.getByRole('table') },
+      ],
+    });
     this.newsBox = new NewsBox(page);
 
     this.totalWorth = page.getByTestId('stat-total-worth');
     this.todayChange = page.getByTestId('stat-today');
-    this.cash = page.getByTestId('stat-cash');
+    this.cash = healing({
+      where: 'MarketPage',
+      element: 'cash card',
+      ways: [
+        { how: 'test id stat-cash', locator: page.getByTestId('stat-cash') },
+        { how: 'renamed test id stat-cash', locator: page.getByTestId(renamedTestId('stat-cash')) },
+      ],
+    });
 
-    this.searchBox = page.getByLabel(TEXT.market.searchLabel);
+    this.searchBox = healing({
+      where: 'MarketPage',
+      element: 'search box',
+      ways: [
+        { how: 'label Search stocks', locator: page.getByLabel(TEXT.market.searchLabel) },
+        { how: 'label search stocks or find a stock', locator: page.getByLabel(SEARCH_STOCKS) },
+      ],
+    });
     this.clearSearchButton = page.getByRole('button', { name: TEXT.market.clearSearch });
 
     this.allFilter = page.getByRole('button', { name: TEXT.market.filterAll });

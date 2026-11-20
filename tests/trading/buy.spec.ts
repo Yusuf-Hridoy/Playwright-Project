@@ -10,6 +10,7 @@ import {
   wholeSharesOnly,
 } from '../../data/expected-text';
 import { money } from '../../utils/money';
+import { expectBuyTotalIsRight } from '../../checks/trading-checks';
 
 test.describe('Buying while the market is open', () => {
   test.use({ storageState: TRADER.storageState });
@@ -30,8 +31,8 @@ test.describe('Buying while the market is open', () => {
     const cashAfter = cashBefore - costCents;
 
     await test.step('the summary adds up', async () => {
-      expect(await stockPage.summaryTotalCents()).toBe(costCents);
-      await expect(stockPage.summaryTotal).toHaveText(money(costCents));
+      // The same check the bug hunt makes with bug=cost switched on.
+      await expectBuyTotalIsRight(stockPage, shares);
       expect(await stockPage.summaryCashAfterCents()).toBe(cashAfter);
     });
 

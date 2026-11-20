@@ -7,6 +7,43 @@
 import { BASE_URL } from '../config/environments';
 import { MARKET_CLOSED_VALUE, MARKET_PARAM, SEED } from '../config/test-settings';
 
+/** The five bugs the app can be asked to show, from js/test-switches.js. */
+export type BugName = 'cost' | 'gain' | 'limit' | 'sort' | 'search';
+
+/** The four ways the app can pretend to be a newer version, from js/drift.js. */
+export type DriftName = 'text' | 'ids' | 'layout' | 'popup';
+
+/**
+ * The app's test switches, as a test asks for them. Every one is off unless a
+ * test turns it on, so a plain run builds exactly the links it built before.
+ */
+export interface AppSwitches {
+  readonly bugs?: readonly BugName[];
+  readonly drift?: readonly DriftName[];
+  /** How long every data load waits, in real milliseconds. 0 is off. */
+  readonly slowMs?: number;
+  readonly flaky?: boolean;
+  /** Overrides the usual ?seed=42. */
+  readonly seed?: string;
+}
+
+/** Nothing switched on. The value every page object starts from. */
+export const NO_SWITCHES: AppSwitches = Object.freeze({});
+
+/**
+ * The query the app reads its switches from (js/test-switches.js). This is the
+ * one place that knows the names, so a page object never builds a link itself.
+ */
+export function switchQuery(switches: AppSwitches = NO_SWITCHES): Record<string, string> {
+  const query: Record<string, string> = {};
+  if (switches.bugs !== undefined && switches.bugs.length > 0) query['bug'] = switches.bugs.join(',');
+  if (switches.drift !== undefined && switches.drift.length > 0) query['drift'] = switches.drift.join(',');
+  if (switches.slowMs !== undefined && switches.slowMs > 0) query['slow'] = String(switches.slowMs);
+  if (switches.flaky === true) query['flaky'] = 'on';
+  if (switches.seed !== undefined && switches.seed !== '') query['seed'] = switches.seed;
+  return query;
+}
+
 export type AppPage =
   | 'login'
   | 'market'
@@ -35,6 +72,8 @@ const PAGE_FILES: Readonly<Record<AppPage, string>> = Object.freeze({
 export interface UrlOptions {
   /** Adds ?market=closed, the only switch that shuts the market now. */
   readonly marketClosed?: boolean;
+  /** The app's test switches: bugs, drift, slow, flaky and the seed. */
+  readonly switches?: AppSwitches;
   readonly baseUrl?: string;
 }
 
@@ -66,6 +105,11 @@ export function urlFor(
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value !== '') search.set(key, value);
+  }
+  // The switches go on before the usual seed, so a test that asked for its own
+  // seed keeps it. Anything the caller put in `query` still wins over both.
+  for (const [key, value] of Object.entries(switchQuery(options.switches))) {
+    if (!search.has(key)) search.set(key, value);
   }
   if (!search.has('seed')) search.set('seed', SEED);
   if (options.marketClosed === true && !search.has(MARKET_PARAM)) {

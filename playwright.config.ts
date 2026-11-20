@@ -18,6 +18,21 @@ const MOBILE_ONLY = /@mobile/;
 // journeys, not to run the whole suite three times over.
 const SMOKE_ONLY = /@smoke/;
 
+// The Phase 5 tests all turn one of the app's test switches on, so they can
+// only mean anything in a project built for them. Each one gets its own
+// project below, and the everyday projects leave all of them alone.
+const BUG_HUNT_ONLY = /@bug-hunt/;
+const DRIFT_ONLY = /@drift/;
+const RESILIENCE_ONLY = /@resilience/;
+
+// A quarantined test still runs, in its own project, where its result cannot
+// turn the main run red. No project but that one picks it up.
+const QUARANTINE_ONLY = /@quarantine/;
+
+// What the everyday projects leave out: the phone tests, the four Phase 5
+// areas, and anything parked in quarantine.
+const NOT_FOR_CHROMIUM = /@mobile|@bug-hunt|@drift|@resilience|@quarantine/;
+
 export default defineConfig({
   testDir: './tests',
 
@@ -31,7 +46,15 @@ export default defineConfig({
   retries: IS_CI ? 2 : 0,
   workers: IS_CI ? 2 : ENVIRONMENT_NAME === 'local' ? LOCAL_SERVER_WORKERS : undefined,
 
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    // The three Phase 5 reporters. Each one keeps quiet unless the run gave it
+    // something to say, so a plain `npm test` reads exactly as it did before.
+    ['./reporters/bug-hunt-reporter.ts'],
+    ['./reporters/heal-reporter.ts'],
+    ['./reporters/flaky-reporter.ts'],
+  ],
 
   use: {
     baseURL: BASE_URL,
@@ -57,25 +80,64 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      grepInvert: MOBILE_ONLY,
+      grepInvert: NOT_FOR_CHROMIUM,
       dependencies: ['setup'],
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
       grep: SMOKE_ONLY,
+      grepInvert: QUARANTINE_ONLY,
       dependencies: ['setup'],
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
       grep: SMOKE_ONLY,
+      grepInvert: QUARANTINE_ONLY,
       dependencies: ['setup'],
     },
     {
       name: 'mobile',
       use: { ...devices['Pixel 7'] },
       grep: MOBILE_ONLY,
+      grepInvert: QUARANTINE_ONLY,
+      dependencies: ['setup'],
+    },
+
+    // Each of the app's five bugs, switched on, against the very check the
+    // everyday suite makes. Every test here is marked test.fail().
+    {
+      name: 'bug-hunt',
+      use: { ...devices['Desktop Chrome'] },
+      grep: BUG_HUNT_ONLY,
+      dependencies: ['setup'],
+    },
+
+    // The app pretending to be a newer version: renamed labels, new test ids,
+    // a moved layout and surprise popups.
+    {
+      name: 'drift',
+      use: { ...devices['Desktop Chrome'] },
+      grep: DRIFT_ONLY,
+      dependencies: ['setup'],
+    },
+
+    // A slow app and an app that drops the odd load.
+    {
+      name: 'resilience',
+      use: { ...devices['Desktop Chrome'] },
+      grep: RESILIENCE_ONLY,
+      dependencies: ['setup'],
+    },
+
+    // Parked tests. A retry here would only hide how unsteady the test is,
+    // which is the one thing this project exists to show.
+    {
+      name: 'quarantine',
+      use: { ...devices['Desktop Chrome'] },
+      grep: QUARANTINE_ONLY,
+      retries: 0,
       dependencies: ['setup'],
     },
   ],

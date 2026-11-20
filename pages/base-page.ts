@@ -4,7 +4,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { TopMenu } from '../components/top-menu';
-import { urlFor, type AppPage } from '../utils/app-paths';
+import { urlFor, NO_SWITCHES, type AppPage, type AppSwitches } from '../utils/app-paths';
 
 export interface PageObjectOptions {
   /**
@@ -13,15 +13,25 @@ export interface PageObjectOptions {
    * every link it draws, so it survives moving around inside the app.
    */
   readonly marketClosed?: boolean;
+
+  /**
+   * The app's test switches: bugs, drift, slow, flaky and the seed. Every page
+   * this object opens carries them, and the app copies them onto every link it
+   * draws, so they survive moving around inside the app. Off by default, so a
+   * plain test opens exactly the link it opened before these existed.
+   */
+  readonly switches?: AppSwitches;
 }
 
 export abstract class BasePage {
   readonly topMenu: TopMenu;
   protected readonly marketClosed: boolean;
+  protected readonly switches: AppSwitches;
 
   constructor(readonly page: Page, options: PageObjectOptions = {}) {
     this.topMenu = new TopMenu(page);
     this.marketClosed = options.marketClosed === true;
+    this.switches = options.switches ?? NO_SWITCHES;
   }
 
   /**
@@ -32,7 +42,7 @@ export abstract class BasePage {
 
   /** The link this page object would open, switches and all. */
   urlFor(target: AppPage, query: Readonly<Record<string, string>> = {}): string {
-    return urlFor(target, query, { marketClosed: this.marketClosed });
+    return urlFor(target, query, { marketClosed: this.marketClosed, switches: this.switches });
   }
 
   /**
