@@ -101,8 +101,14 @@ export class PaymentFrame {
       where: 'PaymentFrame',
       element: 'Pay button',
       ways: [
-        { how: 'role button named Pay and an amount', locator: this.frame.getByRole('button', { name: /^Pay \$[\d,]+$/ }) },
-        { how: 'renamed test id card-pay', locator: this.frame.getByTestId(renamedTestId('card-pay')) },
+        {
+          how: 'role button named Pay and an amount',
+          locator: this.frame.getByRole('button', { name: /^Pay \$[\d,]+$/ }),
+        },
+        {
+          how: 'renamed test id card-pay',
+          locator: this.frame.getByTestId(renamedTestId('card-pay')),
+        },
       ],
     });
     this.processingButton = this.frame.getByRole('button', { name: TEXT.payment.processing });
@@ -121,7 +127,10 @@ export class PaymentFrame {
       element: `${field} field`,
       ways: [
         { how: `label ${label}`, locator: this.frame.getByLabel(label) },
-        { how: `renamed test id ${testId}`, locator: this.frame.getByTestId(renamedTestId(testId)) },
+        {
+          how: `renamed test id ${testId}`,
+          locator: this.frame.getByTestId(renamedTestId(testId)),
+        },
       ],
     });
   }

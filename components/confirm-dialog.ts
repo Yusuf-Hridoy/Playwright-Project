@@ -25,7 +25,11 @@ export class ConfirmDialog {
   /** The question at the top, like "Buy 5 KRYL?". */
   readonly title: Locator;
 
-  constructor(readonly root: Locator, names: ConfirmDialogNames, parts: ConfirmDialogParts = {}) {
+  constructor(
+    readonly root: Locator,
+    names: ConfirmDialogNames,
+    parts: ConfirmDialogParts = {},
+  ) {
     this.confirmButton = parts.confirmButton ?? root.getByRole('button', { name: names.confirm });
     this.cancelButton = root.getByRole('button', { name: names.cancel });
     this.title = root.getByRole('heading');

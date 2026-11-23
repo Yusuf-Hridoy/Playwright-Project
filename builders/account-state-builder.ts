@@ -113,7 +113,9 @@ export class AccountStateBuilder {
   withHolding(symbol: string, holding: Holding): this {
     this.assertKnownSymbol(symbol);
     if (!Number.isInteger(holding.shares) || holding.shares <= 0) {
-      throw new Error(`A holding needs at least 1 whole share, but ${symbol} was given ${holding.shares}.`);
+      throw new Error(
+        `A holding needs at least 1 whole share, but ${symbol} was given ${holding.shares}.`,
+      );
     }
     this.assertWholeCents(holding.totalPaidCents, `${symbol} totalPaidCents`);
     this.holdings = { ...(this.holdings ?? deepCopy(this.requireUser().start.holdings)) };
@@ -141,7 +143,9 @@ export class AccountStateBuilder {
       throw new Error(`A watchlist cannot hold the same stock twice: ${symbols.join(', ')}.`);
     }
     if (symbols.length > MAX_WATCHLIST) {
-      throw new Error(`A watchlist holds at most ${MAX_WATCHLIST} stocks, but ${symbols.length} were given.`);
+      throw new Error(
+        `A watchlist holds at most ${MAX_WATCHLIST} stocks, but ${symbols.length} were given.`,
+      );
     }
     this.watchlistSymbols = [...symbols];
     return this;
@@ -178,11 +182,15 @@ export class AccountStateBuilder {
     const sectors = options.sectors === undefined ? base.sectors : [...options.sectors];
     for (const sector of sectors) {
       if (!SECTORS.includes(sector)) {
-        throw new Error(`There is no sector called ${sector}. The app lists ${SECTORS.join(', ')}.`);
+        throw new Error(
+          `There is no sector called ${sector}. The app lists ${SECTORS.join(', ')}.`,
+        );
       }
     }
     if (sectors.length > MAX_SECTORS) {
-      throw new Error(`A profile holds at most ${MAX_SECTORS} sectors, but ${sectors.length} were given.`);
+      throw new Error(
+        `A profile holds at most ${MAX_SECTORS} sectors, but ${sectors.length} were given.`,
+      );
     }
     if (new Set(sectors).size !== sectors.length) {
       throw new Error(`A profile cannot hold the same sector twice: ${sectors.join(', ')}.`);
@@ -256,7 +264,10 @@ export class AccountStateBuilder {
     const holdings = this.holdings ?? deepCopy(user.start.holdings);
     const cashCents = this.cashCents ?? user.start.cashCents;
 
-    const paidCents = Object.values(holdings).reduce((sum, holding) => sum + holding.totalPaidCents, 0);
+    const paidCents = Object.values(holdings).reduce(
+      (sum, holding) => sum + holding.totalPaidCents,
+      0,
+    );
     // Money in = money still in cash + money already spent on stock. Keeping
     // these in step means the wallet's history adds up like a real one.
     const totalAddedCents = cashCents + paidCents;
@@ -342,7 +353,9 @@ export class AccountStateBuilder {
 
   private assertKnownSymbol(symbol: string): void {
     if (!SYMBOLS.includes(symbol)) {
-      throw new Error(`There is no stock called ${symbol}. The 8 stocks are ${SYMBOLS.join(', ')}.`);
+      throw new Error(
+        `There is no stock called ${symbol}. The 8 stocks are ${SYMBOLS.join(', ')}.`,
+      );
     }
   }
 }

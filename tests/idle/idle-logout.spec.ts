@@ -21,65 +21,75 @@ test.describe('The idle log out', () => {
   test.describe('with a session', () => {
     test.use({ storageState: TRADER.storageState });
 
-    test('warns after fourteen minutes, counts down, and "Stay logged in" resets it', {
-      tag: ['@regression'],
-    }, async ({ rulesPage, page }) => {
-      const dialog = new IdleDialog(page);
-      const waited = 5_000;
+    test(
+      'warns after fourteen minutes, counts down, and "Stay logged in" resets it',
+      {
+        tag: ['@regression', '@p2', '@REQ-LIVE-03'],
+      },
+      async ({ rulesPage, page }) => {
+        const dialog = new IdleDialog(page);
+        const waited = 5_000;
 
-      await rulesPage.goto();
-
-      await expect(dialog.root).toBeHidden();
-
-      await page.clock.runFor(WARN_MS);
-
-      await expect(dialog.root).toBeVisible();
-      await expect(dialog.root).toContainText(TEXT.idle.dialogTitle);
-      await expect(dialog.countdown).toHaveText(idleCountdownText(FIRST_COUNT));
-
-      await test.step('and the countdown keeps going down', async () => {
-        await page.clock.runFor(waited);
-
-        await expect(dialog.countdown).toHaveText(idleCountdownText(FIRST_COUNT - waited / 1_000));
-      });
-
-      await test.step('"Stay logged in" closes it and starts the fourteen minutes again', async () => {
-        await dialog.stayLoggedIn();
+        await rulesPage.goto();
 
         await expect(dialog.root).toBeHidden();
 
-        await page.clock.runFor(WARN_MS - 60_000);
-
-        await expect(dialog.root).toBeHidden();
-        await expect(rulesPage.topMenu.root).toBeVisible();
-
-        await page.clock.runFor(60_000);
+        await page.clock.runFor(WARN_MS);
 
         await expect(dialog.root).toBeVisible();
+        await expect(dialog.root).toContainText(TEXT.idle.dialogTitle);
         await expect(dialog.countdown).toHaveText(idleCountdownText(FIRST_COUNT));
-      });
-    });
 
-    test('logs out after fifteen minutes, and the same cash is there on the way back in', {
-      tag: ['@regression'],
-    }, async ({ rulesPage, loginPage, marketPage, topMenu, page }) => {
-      await rulesPage.goto();
+        await test.step('and the countdown keeps going down', async () => {
+          await page.clock.runFor(waited);
 
-      const cashBefore = await topMenu.cashCents();
+          await expect(dialog.countdown).toHaveText(
+            idleCountdownText(FIRST_COUNT - waited / 1_000),
+          );
+        });
 
-      await page.clock.runFor(LOGOUT_MS);
+        await test.step('"Stay logged in" closes it and starts the fourteen minutes again', async () => {
+          await dialog.stayLoggedIn();
 
-      await expect(loginPage.submitButton).toBeVisible();
-      await expect(loginPage.infoMessage).toHaveText(TEXT.login.idleInfo);
-      await expect(page).toHaveURL(/reason=idle\b/);
+          await expect(dialog.root).toBeHidden();
 
-      await test.step('logging back in finds the account exactly as it was', async () => {
-        await loginPage.logIn(TRADER.email, TRADER.password);
+          await page.clock.runFor(WARN_MS - 60_000);
 
-        await marketPage.waitUntilReady();
+          await expect(dialog.root).toBeHidden();
+          await expect(rulesPage.topMenu.root).toBeVisible();
 
-        await expect(topMenu.cash).toHaveAttribute('data-cents', String(cashBefore));
-      });
-    });
+          await page.clock.runFor(60_000);
+
+          await expect(dialog.root).toBeVisible();
+          await expect(dialog.countdown).toHaveText(idleCountdownText(FIRST_COUNT));
+        });
+      },
+    );
+
+    test(
+      'logs out after fifteen minutes, and the same cash is there on the way back in',
+      {
+        tag: ['@regression', '@p2', '@REQ-LIVE-03'],
+      },
+      async ({ rulesPage, loginPage, marketPage, topMenu, page }) => {
+        await rulesPage.goto();
+
+        const cashBefore = await topMenu.cashCents();
+
+        await page.clock.runFor(LOGOUT_MS);
+
+        await expect(loginPage.submitButton).toBeVisible();
+        await expect(loginPage.infoMessage).toHaveText(TEXT.login.idleInfo);
+        await expect(page).toHaveURL(/reason=idle\b/);
+
+        await test.step('logging back in finds the account exactly as it was', async () => {
+          await loginPage.logIn(TRADER.email, TRADER.password);
+
+          await marketPage.waitUntilReady();
+
+          await expect(topMenu.cash).toHaveAttribute('data-cents', String(cashBefore));
+        });
+      },
+    );
   });
 });

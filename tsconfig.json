@@ -16,5 +16,17 @@
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": false
   },
-  "include": ["config", "pages", "components", "fixtures", "data", "builders", "utils", "setup", "tests", "playwright.config.ts"]
+  "include": [
+    "config",
+    "pages",
+    "components",
+    "fixtures",
+    "data",
+    "builders",
+    "utils",
+    "setup",
+    "tests",
+    "reporters",
+    "playwright.config.ts"
+  ]
 }

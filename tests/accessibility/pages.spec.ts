@@ -11,109 +11,142 @@ import { TRADER } from '../../data/demo-accounts';
 import { reportFor, scanPage } from '../../utils/a11y';
 
 test.describe('The log in page', () => {
-  test('has no serious accessibility problems', { tag: ['@a11y', '@regression'] }, async ({
-    loginPage,
-    page,
-  }) => {
-    await loginPage.goto();
-    // Axe leans on its own timers, and every test starts with the clock
-    // frozen, so the clock is let go before the scan.
-    await page.clock.resume();
+  test(
+    'has no serious accessibility problems',
+    { tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'] },
+    async ({ loginPage, page }) => {
+      await loginPage.goto();
+      // Axe leans on its own timers, and every test starts with the clock
+      // frozen, so the clock is let go before the scan.
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'login');
+      const report = await scanPage(page, 'login');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 });
 
 test.describe('Every signed-in page', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('the Market page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ marketPage, page }) => {
-    await marketPage.goto();
-    await page.clock.resume();
+  test(
+    'the Market page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ marketPage, page }) => {
+      await marketPage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'market');
+      const report = await scanPage(page, 'market');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('a Stock page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ stockPage, page }) => {
-    await stockPage.goto('KRYL');
-    await page.clock.resume();
+  test(
+    'a Stock page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ stockPage, page }) => {
+      await stockPage.goto('KRYL');
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'stock');
+      const report = await scanPage(page, 'stock');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('the Portfolio page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ portfolioPage, page }) => {
-    await portfolioPage.goto();
-    await page.clock.resume();
+  test(
+    'the Portfolio page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ portfolioPage, page }) => {
+      await portfolioPage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'portfolio');
+      const report = await scanPage(page, 'portfolio');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('the Wallet page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ walletPage, page }) => {
-    await walletPage.goto();
-    await page.clock.resume();
+  test(
+    'the Wallet page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ walletPage, page }) => {
+      await walletPage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'wallet');
+      const report = await scanPage(page, 'wallet');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('the Watchlist page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ watchlistPage, page }) => {
-    await watchlistPage.goto();
-    await page.clock.resume();
+  test(
+    'the Watchlist page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ watchlistPage, page }) => {
+      await watchlistPage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'watchlist');
+      const report = await scanPage(page, 'watchlist');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('the News page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ newsPage, page }) => {
-    await newsPage.goto();
-    await page.clock.resume();
+  test(
+    'the News page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ newsPage, page }) => {
+      await newsPage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'news');
+      const report = await scanPage(page, 'news');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('the Profile page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ profilePage, page }) => {
-    await profilePage.goto();
-    await page.clock.resume();
+  test(
+    'the Profile page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ profilePage, page }) => {
+      await profilePage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'profile');
+      const report = await scanPage(page, 'profile');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 
-  test('the Rules page has no serious accessibility problems', {
-    tag: ['@a11y', '@regression'],
-  }, async ({ rulesPage, page }) => {
-    await rulesPage.goto();
-    await page.clock.resume();
+  test(
+    'the Rules page has no serious accessibility problems',
+    {
+      tag: ['@a11y', '@regression', '@p2', '@REQ-A11Y-01'],
+    },
+    async ({ rulesPage, page }) => {
+      await rulesPage.goto();
+      await page.clock.resume();
 
-    const report = await scanPage(page, 'rules');
+      const report = await scanPage(page, 'rules');
 
-    expect(report.blocking, reportFor(report)).toEqual([]);
-  });
+      expect(report.blocking, reportFor(report)).toEqual([]);
+    },
+  );
 });

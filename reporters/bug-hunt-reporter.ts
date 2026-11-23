@@ -57,7 +57,9 @@ export default class BugHuntReporter implements Reporter {
 
     const lines = [score];
     for (const hunt of missed) {
-      lines.push(`  Slipped through: bug=${hunt.bug} — "${hunt.title}" passed, so its check no longer catches it.`);
+      lines.push(
+        `  Slipped through: bug=${hunt.bug} — "${hunt.title}" passed, so its check no longer catches it.`,
+      );
     }
 
     process.stdout.write(`\n${lines.join('\n')}\n`);
@@ -66,7 +68,10 @@ export default class BugHuntReporter implements Reporter {
     if (missed.length > 0) {
       summary.push('| Bug | Test |', '| --- | --- |');
       for (const hunt of missed) summary.push(`| bug=${hunt.bug} | ${hunt.title} |`);
-      summary.push('', 'A bug that slipped through means the everyday test sharing that check is not checking it.');
+      summary.push(
+        '',
+        'A bug that slipped through means the everyday test sharing that check is not checking it.',
+      );
     }
     appendToSummary(summary.join('\n'));
   }

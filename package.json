@@ -15,16 +15,37 @@
     "test:drift": "playwright test --project=drift",
     "test:resilience": "playwright test --project=resilience",
     "test:quarantine": "playwright test --project=quarantine",
+    "test:critical": "playwright test --project=chromium --grep @p1",
     "test:headed": "playwright test --headed",
     "report": "playwright show-report",
     "typecheck": "tsc --noEmit",
-    "update-snapshots": "playwright test --grep @visual --project=chromium --update-snapshots"
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:tags": "node scripts/check-test-tags.mjs",
+    "coverage:requirements": "node scripts/requirements-coverage.mjs",
+    "update-snapshots": "playwright test --grep @visual --project=chromium --update-snapshots",
+    "prepare": "node -e \"process.env.CI || require('child_process').execSync('husky',{stdio:'inherit'})\""
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.0",
     "@types/node": "26.6.6",
     "dotenv": "18.0.10",
-    "typescript": "7.0.2"
+    "eslint": "10.15.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-playwright": "2.12.2",
+    "husky": "9.1.7",
+    "lint-staged": "17.6.1",
+    "prettier": "3.10.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0"
+  },
+  "lint-staged": {
+    "*.{ts,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }

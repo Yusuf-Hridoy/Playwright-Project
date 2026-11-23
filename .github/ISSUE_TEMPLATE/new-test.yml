@@ -1,0 +1,44 @@
+name: New test
+description: A behaviour that should be covered and is not.
+title: 'Test: '
+labels: [new test]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every test covers at least one requirement from
+        [docs/requirements.md](../blob/main/docs/requirements.md). The coverage
+        table in [docs/requirements-coverage.md](../blob/main/docs/requirements-coverage.md)
+        shows what is not covered yet.
+
+  - type: input
+    id: requirement
+    attributes:
+      label: Which requirement
+      description: The ID from docs/requirements.md. More than one is fine.
+      placeholder: REQ-TRADE-01
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What the test should check
+      description: The steps, and what the app should do at the end of them.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: |
+        @p1 is logging in, the session guard, buying, selling, the money math,
+        adding money and card payments. @p2 is the rest of the product. @p3 is
+        how the place looks.
+      options:
+        - '@p1'
+        - '@p2'
+        - '@p3'
+    validations:
+      required: true

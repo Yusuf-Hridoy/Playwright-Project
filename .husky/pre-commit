@@ -1,0 +1,6 @@
+# Runs before every commit.
+#
+# lint-staged fixes and formats only the files that are staged, then puts the
+# fixed versions back in the commit. If ESLint still finds an error after its
+# own --fix, lint-staged exits non-zero and the commit does not happen.
+npx lint-staged

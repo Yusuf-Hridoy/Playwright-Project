@@ -107,7 +107,9 @@ export class NewsPage extends BasePage {
 
   /** The symbols the headlines on the page belong to. */
   async itemStocks(): Promise<string[]> {
-    return this.items.evaluateAll((rows) => rows.map((row) => row.getAttribute('data-stock') ?? ''));
+    return this.items.evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute('data-stock') ?? ''),
+    );
   }
 
   /**

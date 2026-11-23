@@ -42,16 +42,28 @@ export class TopMenu {
       where: 'TopMenu',
       element: 'Market link',
       ways: [
-        { how: 'role link named Market', locator: this.root.getByRole('link', { name: TEXT.menu.market, exact: true }) },
-        { how: 'role link named market or stocks', locator: this.root.getByRole('link', { name: MARKET_LINK }) },
+        {
+          how: 'role link named Market',
+          locator: this.root.getByRole('link', { name: TEXT.menu.market, exact: true }),
+        },
+        {
+          how: 'role link named market or stocks',
+          locator: this.root.getByRole('link', { name: MARKET_LINK }),
+        },
       ],
     });
     this.portfolioLink = healing({
       where: 'TopMenu',
       element: 'Portfolio link',
       ways: [
-        { how: 'role link named Portfolio', locator: this.root.getByRole('link', { name: TEXT.menu.portfolio, exact: true }) },
-        { how: 'renamed test id menu-link-portfolio', locator: this.root.getByTestId(renamedTestId('menu-link-portfolio')) },
+        {
+          how: 'role link named Portfolio',
+          locator: this.root.getByRole('link', { name: TEXT.menu.portfolio, exact: true }),
+        },
+        {
+          how: 'renamed test id menu-link-portfolio',
+          locator: this.root.getByTestId(renamedTestId('menu-link-portfolio')),
+        },
       ],
     });
     this.watchlistLink = this.root.getByRole('link', { name: TEXT.menu.watchlist, exact: true });
@@ -59,8 +71,14 @@ export class TopMenu {
       where: 'TopMenu',
       element: 'Wallet link',
       ways: [
-        { how: 'role link named Wallet', locator: this.root.getByRole('link', { name: TEXT.menu.wallet, exact: true }) },
-        { how: 'renamed test id menu-link-wallet', locator: this.root.getByTestId(renamedTestId('menu-link-wallet')) },
+        {
+          how: 'role link named Wallet',
+          locator: this.root.getByRole('link', { name: TEXT.menu.wallet, exact: true }),
+        },
+        {
+          how: 'renamed test id menu-link-wallet',
+          locator: this.root.getByTestId(renamedTestId('menu-link-wallet')),
+        },
       ],
     });
     this.rulesLink = this.root.getByRole('link', { name: TEXT.menu.rules, exact: true });
@@ -74,15 +92,24 @@ export class TopMenu {
       ways: [
         { how: 'test id menu-cash', locator: this.root.getByTestId('menu-cash') },
         // The box is a link to the Wallet, and the word Cash starts its name.
-        { how: 'role link whose name starts with Cash', locator: this.root.getByRole('link', { name: new RegExp(`^${TEXT.menu.cash}`) }) },
+        {
+          how: 'role link whose name starts with Cash',
+          locator: this.root.getByRole('link', { name: new RegExp(`^${TEXT.menu.cash}`) }),
+        },
       ],
     });
     this.logoutButton = healing({
       where: 'TopMenu',
       element: 'log out button',
       ways: [
-        { how: 'role button named Log out', locator: this.root.getByRole('button', { name: TEXT.menu.logout }) },
-        { how: 'role button named log out or sign out', locator: this.root.getByRole('button', { name: LOG_OUT }) },
+        {
+          how: 'role button named Log out',
+          locator: this.root.getByRole('button', { name: TEXT.menu.logout }),
+        },
+        {
+          how: 'role button named log out or sign out',
+          locator: this.root.getByRole('button', { name: LOG_OUT }),
+        },
       ],
     });
   }

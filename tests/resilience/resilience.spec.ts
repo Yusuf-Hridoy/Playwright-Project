@@ -29,66 +29,69 @@ const STEP_MS = 500;
 test.describe('An app that takes three seconds over everything', () => {
   test.use({ storageState: TRADER.storageState, slowMs: SLOW_MS });
 
-  test('the Market page shows it is loading, then shows all eight stocks', {
-    tag: ['@resilience'],
-  }, async ({ page, marketPage }) => {
-    await marketPage.gotoWhileLoading();
+  test(
+    'the Market page shows it is loading, then shows all eight stocks',
+    {
+      tag: ['@resilience', '@p2', '@REQ-SWITCH-03', '@REQ-MARKET-01'],
+    },
+    async ({ page, marketPage }) => {
+      await marketPage.gotoWhileLoading();
 
-    // The account is loaded before the page is drawn at all, and that load is
-    // three seconds slow too, so even the grey loading bars need the clock
-    // moving on before they turn up.
-    await advanceUntil(page, marketPage.loadingBox, {
-      stepMs: STEP_MS,
-      what: 'the grey loading bars',
-    });
-    await expect(marketPage.table).toBeHidden();
+      // The account is loaded before the page is drawn at all, and that load is
+      // three seconds slow too, so even the grey loading bars need the clock
+      // moving on before they turn up.
+      await advanceUntil(page, marketPage.loadingBox, {
+        stepMs: STEP_MS,
+        what: 'the grey loading bars',
+      });
+      await expect(marketPage.table).toBeHidden();
 
-    await advanceUntil(page, marketPage.table, { stepMs: STEP_MS, what: 'the stock table' });
+      await advanceUntil(page, marketPage.table, { stepMs: STEP_MS, what: 'the stock table' });
 
-    await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
-    await expect(marketPage.loadingBox).toBeHidden();
-    await expect(marketPage.errorBox).toBeHidden();
-  });
+      await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
+      await expect(marketPage.loadingBox).toBeHidden();
+      await expect(marketPage.errorBox).toBeHidden();
+    },
+  );
 
-  test('buying one KRYL still works from end to end', { tag: ['@resilience'] }, async ({
-    page,
-    stockPage,
-    topMenu,
-  }) => {
-    await stockPage.gotoWhileLoading('KRYL');
+  test(
+    'buying one KRYL still works from end to end',
+    { tag: ['@resilience', '@p1', '@REQ-SWITCH-03', '@REQ-TRADE-01'] },
+    async ({ page, stockPage, topMenu }) => {
+      await stockPage.gotoWhileLoading('KRYL');
 
-    await advanceUntil(page, stockPage.priceOnceLoaded(), {
-      stepMs: STEP_MS,
-      what: "KRYL's price",
-    });
+      await advanceUntil(page, stockPage.priceOnceLoaded(), {
+        stepMs: STEP_MS,
+        what: "KRYL's price",
+      });
 
-    const cashBefore = await topMenu.cashCents();
-    const priceCents = await stockPage.priceCents();
+      const cashBefore = await topMenu.cashCents();
+      const priceCents = await stockPage.priceCents();
 
-    await stockPage.trade(1);
+      await stockPage.trade(1);
 
-    await expect(stockPage.successTitle).toHaveText(boughtTitle(1, 'KRYL'));
-    await expect(topMenu.cash).toHaveAttribute('data-cents', String(cashBefore - priceCents));
-  });
+      await expect(stockPage.successTitle).toHaveText(boughtTitle(1, 'KRYL'));
+      await expect(topMenu.cash).toHaveAttribute('data-cents', String(cashBefore - priceCents));
+    },
+  );
 
-  test("the Portfolio page shows the trader's holdings", { tag: ['@resilience'] }, async ({
-    page,
-    portfolioPage,
-  }) => {
-    await portfolioPage.gotoWhileLoading();
+  test(
+    "the Portfolio page shows the trader's holdings",
+    { tag: ['@resilience', '@p2', '@REQ-SWITCH-03', '@REQ-PORTFOLIO-01'] },
+    async ({ page, portfolioPage }) => {
+      await portfolioPage.gotoWhileLoading();
 
-    await advanceUntil(page, portfolioPage.row('LUMA'), {
-      stepMs: STEP_MS,
-      what: 'the LUMA holding row',
-    });
+      await advanceUntil(page, portfolioPage.row('LUMA'), {
+        stepMs: STEP_MS,
+        what: 'the LUMA holding row',
+      });
 
-    await expect(portfolioPage.allRows()).toHaveCount(
-      Object.keys(TRADER.start.holdings).length,
-    );
-    await expect(portfolioPage.shares('LUMA')).toHaveText(
-      sharesWord(TRADER.start.holdings['LUMA']!.shares),
-    );
-  });
+      await expect(portfolioPage.allRows()).toHaveCount(Object.keys(TRADER.start.holdings).length);
+      await expect(portfolioPage.shares('LUMA')).toHaveText(
+        sharesWord(TRADER.start.holdings['LUMA'].shares),
+      );
+    },
+  );
 });
 
 test.describe('An app that drops the odd request', () => {
@@ -100,52 +103,60 @@ test.describe('An app that drops the odd request', () => {
     seed: STOCKS_FAIL_THEN_LOAD_SEED,
   });
 
-  test('a load that fails says so, and "Try again" brings the stocks back', {
-    tag: ['@resilience'],
-  }, async ({ page, marketPage }) => {
-    await marketPage.gotoWhileLoading();
+  test(
+    'a load that fails says so, and "Try again" brings the stocks back',
+    {
+      tag: ['@resilience', '@p2', '@REQ-SWITCH-04', '@REQ-MARKET-04'],
+    },
+    async ({ page, marketPage }) => {
+      await marketPage.gotoWhileLoading();
 
-    await expect(marketPage.errorBox).toBeVisible();
-    await expect(marketPage.errorBox).toContainText(TEXT.market.errorTitle);
-    await expect(marketPage.table).toBeHidden();
+      await expect(marketPage.errorBox).toBeVisible();
+      await expect(marketPage.errorBox).toContainText(TEXT.market.errorTitle);
+      await expect(marketPage.table).toBeHidden();
 
-    await marketPage.retry();
+      await marketPage.retry();
 
-    // The second try is let through, but the app still sleeps on it for a
-    // while, and that sleep is a timer like any other.
-    await advanceUntil(page, marketPage.table, { stepMs: STEP_MS, what: 'the stock table' });
+      // The second try is let through, but the app still sleeps on it for a
+      // while, and that sleep is a timer like any other.
+      await advanceUntil(page, marketPage.table, { stepMs: STEP_MS, what: 'the stock table' });
 
-    await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
-    await expect(marketPage.errorBox).toBeHidden();
-  });
+      await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
+      await expect(marketPage.errorBox).toBeHidden();
+    },
+  );
 
-  test('the same seed gives the same run of failures on a second page', {
-    tag: ['@resilience'],
-  }, async ({ page, marketPage, context, appSwitches, marketTime }) => {
-    await marketPage.gotoWhileLoading();
-    await expect(marketPage.errorBox).toBeVisible();
-    await marketPage.retry();
-    await advanceUntil(page, marketPage.table, { stepMs: STEP_MS, what: 'the stock table' });
-    await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
+  test(
+    'the same seed gives the same run of failures on a second page',
+    {
+      tag: ['@resilience', '@p2', '@REQ-SWITCH-04'],
+    },
+    async ({ page, marketPage, context, appSwitches, marketTime }) => {
+      await marketPage.gotoWhileLoading();
+      await expect(marketPage.errorBox).toBeVisible();
+      await marketPage.retry();
+      await advanceUntil(page, marketPage.table, { stepMs: STEP_MS, what: 'the stock table' });
+      await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
 
-    await test.step('a second page, opened from scratch, does exactly the same', async () => {
-      const second = await context.newPage();
-      await freezeClock(second, marketTime);
-      const secondMarket = new MarketPage(second, { switches: appSwitches });
+      await test.step('a second page, opened from scratch, does exactly the same', async () => {
+        const second = await context.newPage();
+        await freezeClock(second, marketTime);
+        const secondMarket = new MarketPage(second, { switches: appSwitches });
 
-      await secondMarket.gotoWhileLoading();
+        await secondMarket.gotoWhileLoading();
 
-      await expect(secondMarket.errorBox).toBeVisible();
-      await expect(secondMarket.table).toBeHidden();
+        await expect(secondMarket.errorBox).toBeVisible();
+        await expect(secondMarket.table).toBeHidden();
 
-      await secondMarket.retry();
-      await advanceUntil(second, secondMarket.table, {
-        stepMs: STEP_MS,
-        what: 'the stock table on the second page',
+        await secondMarket.retry();
+        await advanceUntil(second, secondMarket.table, {
+          stepMs: STEP_MS,
+          what: 'the stock table on the second page',
+        });
+
+        await expect(secondMarket.allRows()).toHaveCount(STOCK_COUNT);
+        await second.close();
       });
-
-      await expect(secondMarket.allRows()).toHaveCount(STOCK_COUNT);
-      await second.close();
-    });
-  });
+    },
+  );
 });

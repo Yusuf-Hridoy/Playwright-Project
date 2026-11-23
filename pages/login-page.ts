@@ -26,7 +26,10 @@ export class LoginPage extends BasePage {
       element: 'email field',
       ways: [
         { how: 'label Email', locator: page.getByLabel(TEXT.login.emailLabel) },
-        { how: 'renamed test id login-email', locator: page.getByTestId(renamedTestId('login-email')) },
+        {
+          how: 'renamed test id login-email',
+          locator: page.getByTestId(renamedTestId('login-email')),
+        },
       ],
     });
     this.passwordField = healing({
@@ -34,15 +37,24 @@ export class LoginPage extends BasePage {
       element: 'password field',
       ways: [
         { how: 'label Password', locator: page.getByLabel(TEXT.login.passwordLabel) },
-        { how: 'renamed test id login-password', locator: page.getByTestId(renamedTestId('login-password')) },
+        {
+          how: 'renamed test id login-password',
+          locator: page.getByTestId(renamedTestId('login-password')),
+        },
       ],
     });
     this.submitButton = healing({
       where: 'LoginPage',
       element: 'submit button',
       ways: [
-        { how: 'role button named Log in', locator: page.getByRole('button', { name: TEXT.login.submit }) },
-        { how: 'role button named log in or sign in', locator: page.getByRole('button', { name: LOG_IN }) },
+        {
+          how: 'role button named Log in',
+          locator: page.getByRole('button', { name: TEXT.login.submit }),
+        },
+        {
+          how: 'role button named log in or sign in',
+          locator: page.getByRole('button', { name: LOG_IN }),
+        },
       ],
     });
     this.error = page.getByTestId('login-error');

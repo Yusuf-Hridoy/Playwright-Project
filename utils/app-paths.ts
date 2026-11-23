@@ -36,8 +36,10 @@ export const NO_SWITCHES: AppSwitches = Object.freeze({});
  */
 export function switchQuery(switches: AppSwitches = NO_SWITCHES): Record<string, string> {
   const query: Record<string, string> = {};
-  if (switches.bugs !== undefined && switches.bugs.length > 0) query['bug'] = switches.bugs.join(',');
-  if (switches.drift !== undefined && switches.drift.length > 0) query['drift'] = switches.drift.join(',');
+  if (switches.bugs !== undefined && switches.bugs.length > 0)
+    query['bug'] = switches.bugs.join(',');
+  if (switches.drift !== undefined && switches.drift.length > 0)
+    query['drift'] = switches.drift.join(',');
   if (switches.slowMs !== undefined && switches.slowMs > 0) query['slow'] = String(switches.slowMs);
   if (switches.flaky === true) query['flaky'] = 'on';
   if (switches.seed !== undefined && switches.seed !== '') query['seed'] = switches.seed;

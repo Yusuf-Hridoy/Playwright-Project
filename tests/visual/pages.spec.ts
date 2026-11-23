@@ -19,25 +19,37 @@ const SHOT = {
 } as const;
 
 test.describe('How the pages look', () => {
-  test('the log in page', { tag: ['@visual', '@regression'] }, async ({ loginPage, page }) => {
-    await loginPage.goto();
+  test(
+    'the log in page',
+    { tag: ['@visual', '@regression', '@p3', '@REQ-A11Y-03'] },
+    async ({ loginPage, page }) => {
+      await loginPage.goto();
 
-    await expect(page).toHaveScreenshot('login-page.png', SHOT);
-  });
+      await expect(page).toHaveScreenshot('login-page.png', SHOT);
+    },
+  );
 
-  test('the Rules page', { tag: ['@visual', '@regression'] }, async ({ rulesPage, page }) => {
-    await rulesPage.goto();
+  test(
+    'the Rules page',
+    { tag: ['@visual', '@regression', '@p3', '@REQ-A11Y-03'] },
+    async ({ rulesPage, page }) => {
+      await rulesPage.goto();
 
-    await expect(page).toHaveScreenshot('rules-page.png', SHOT);
-  });
+      await expect(page).toHaveScreenshot('rules-page.png', SHOT);
+    },
+  );
 });
 
 test.describe('How the Market looks to a trader', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('the Market page', { tag: ['@visual', '@regression'] }, async ({ marketPage, page }) => {
-    await marketPage.goto();
+  test(
+    'the Market page',
+    { tag: ['@visual', '@regression', '@p3', '@REQ-A11Y-03'] },
+    async ({ marketPage, page }) => {
+      await marketPage.goto();
 
-    await expect(page).toHaveScreenshot('market-page.png', SHOT);
-  });
+      await expect(page).toHaveScreenshot('market-page.png', SHOT);
+    },
+  );
 });

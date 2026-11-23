@@ -55,8 +55,12 @@ function keyOf(event: HealEvent): string {
 }
 
 /** Runtime notes live on the result; a version that keeps them on the test is covered too. */
-function annotationsOf(test: TestCase, result: TestResult): readonly { type: string; description?: string }[] {
-  const onResult = (result as { annotations?: { type: string; description?: string }[] }).annotations;
+function annotationsOf(
+  test: TestCase,
+  result: TestResult,
+): readonly { type: string; description?: string }[] {
+  const onResult = (result as { annotations?: { type: string; description?: string }[] })
+    .annotations;
   return onResult !== undefined && onResult.length > 0 ? onResult : test.annotations;
 }
 
@@ -113,7 +117,9 @@ export default class HealReporter implements Reporter {
     );
 
     const popupTotal = popups.reduce((sum, row) => sum + row.times, 0);
-    const lines = [`Healed locators: ${heals.length}. Popups closed: ${popupTotal}. See ${MARKDOWN_FILE}.`];
+    const lines = [
+      `Healed locators: ${heals.length}. Popups closed: ${popupTotal}. See ${MARKDOWN_FILE}.`,
+    ];
     if (outsideDrift.length > 0) lines.unshift(this.warning(outsideDrift));
     process.stdout.write(`\n${lines.join('\n')}\n`);
 
@@ -144,7 +150,9 @@ export default class HealReporter implements Reporter {
         '| --- | --- | --- | --- | --- |',
       );
       for (const row of heals) {
-        lines.push(`| ${row.where} | ${row.element} | ${row.failed} | ${row.used} | ${row.tests} |`);
+        lines.push(
+          `| ${row.where} | ${row.element} | ${row.failed} | ${row.used} | ${row.tests} |`,
+        );
       }
       lines.push('');
     }

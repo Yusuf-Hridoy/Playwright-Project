@@ -17,7 +17,10 @@ export class WatchlistRow {
   readonly alertButton: Locator;
   readonly removeButton: Locator;
 
-  constructor(page: Page, readonly symbol: string) {
+  constructor(
+    page: Page,
+    readonly symbol: string,
+  ) {
     this.root = page.getByTestId('watchlist-row').and(page.locator(`[data-symbol="${symbol}"]`));
 
     this.dragHandle = this.root.getByTestId('watchlist-drag-handle');

@@ -19,10 +19,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The one place the Playwright version is read. See checks.yml.
+  version:
+    name: Work out the Playwright image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      image: ${{ steps.read.outputs.image }}
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Read the Playwright version from package.json
+        id: read
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').devDependencies['@playwright/test']")"
+          echo "Playwright is $version"
+          echo "image=mcr.microsoft.com/playwright:v${version}-noble" >> "$GITHUB_OUTPUT"
+
   test:
     name: Shard ${{ matrix.shard }} of 3
+    needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
+    container:
+      image: ${{ needs.version.outputs.image }}
+
+    env:
+      HOME: /root
 
     strategy:
       # One slow browser must not take the other shards down with it.
@@ -43,11 +69,6 @@ jobs:
       - name: Install the dependencies
         run: npm ci
 
-      # Every browser this time: the nightly run is the one that covers
-      # Firefox, WebKit and the phone project.
-      - name: Install every browser
-        run: npx playwright install --with-deps
-
       # Every project but quarantine. A quarantined test still runs, in the
       # job below, where its result cannot turn this run red.
       - name: Run shard ${{ matrix.shard }}
@@ -64,12 +85,18 @@ jobs:
 
   merge:
     name: Merge the reports
-    needs: test
+    needs: [version, test]
     # The report is most useful on the night something broke, so it is built
     # whether the shards passed or not.
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    container:
+      image: ${{ needs.version.outputs.image }}
+
+    env:
+      HOME: /root
 
     # This job only reads the repository. Writing to Pages is the publish
     # job's work, and its token is the only one that can do it.
@@ -101,6 +128,30 @@ jobs:
       # shards at once instead of a third of the run apiece.
       - name: Glue them into one HTML report
         run: npx playwright merge-reports --reporter "html,./reporters/bug-hunt-reporter.ts,./reporters/heal-reporter.ts,./reporters/flaky-reporter.ts" ./all-blob-reports
+
+      # The same blobs again, this time as one results file, which is what the
+      # history script counts tonight's numbers and slowest tests from.
+      - name: Merge them again as one results file
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: nightly-results.json
+        run: npx playwright merge-reports --reporter json ./all-blob-reports
+
+      # Last night's history, taken from the page this run is about to
+      # replace. A 404 on the first night is fine: the history starts tonight.
+      - name: Fetch last night's history
+        run: |
+          set -euo pipefail
+          if curl -fsSL -o history.json 'https://yusuf-hridoy.github.io/Playwright-Project/history.json'; then
+            echo "Got last night's history."
+          else
+            echo 'Nothing published yet. Starting a new history.'
+            rm -f history.json
+          fi
+
+      # Writes history.json and history.html next to the report, so both go to
+      # Pages together, and tonight's numbers into the job summary.
+      - name: Add tonight to the history
+        run: node scripts/nightly-history.mjs --results nightly-results.json --previous history.json --out playwright-report
 
       - name: Keep the heal report
         if: always()
@@ -142,8 +193,15 @@ jobs:
   # that is the whole point of parking a test instead of deleting it.
   quarantine:
     name: Quarantined tests
+    needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    container:
+      image: ${{ needs.version.outputs.image }}
+
+    env:
+      HOME: /root
 
     permissions:
       contents: read
@@ -161,9 +219,6 @@ jobs:
       - name: Install the dependencies
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
       - name: Run the quarantined tests
         continue-on-error: true
         run: npm run test:quarantine
@@ -175,7 +230,8 @@ jobs:
     timeout-minutes: 10
 
     # The only job that may write to Pages, and the only one that asks for an
-    # OIDC token, which is what Pages uses to trust the deploy.
+    # OIDC token, which is what Pages uses to trust the deploy. It runs no
+    # tests, so it needs no browser and no container.
     permissions:
       pages: write
       id-token: write

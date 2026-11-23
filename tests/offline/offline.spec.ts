@@ -17,50 +17,58 @@ const BACK_ONLINE_MS = 3_000;
 test.describe('Going offline', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('shows the banner and blocks a buy with the offline message', {
-    tag: ['@regression'],
-  }, async ({ stockPage, context, page }) => {
-    const banner = new OfflineBanner(page);
+  test(
+    'shows the banner and blocks a buy with the offline message',
+    {
+      tag: ['@regression', '@p2', '@REQ-LIVE-02'],
+    },
+    async ({ stockPage, context, page }) => {
+      const banner = new OfflineBanner(page);
 
-    await stockPage.goto('KRYL');
+      await stockPage.goto('KRYL');
 
-    await expect(banner.root).toBeHidden();
+      await expect(banner.root).toBeHidden();
 
-    await context.setOffline(true);
+      await context.setOffline(true);
 
-    await expect(banner.root).toBeVisible();
-    await expect(banner.root).toHaveText(TEXT.connection.offlineBanner);
+      await expect(banner.root).toBeVisible();
+      await expect(banner.root).toHaveText(TEXT.connection.offlineBanner);
 
-    await test.step('and buying one share gets nowhere', async () => {
-      await stockPage.enterShares(1);
-      await stockPage.submit();
+      await test.step('and buying one share gets nowhere', async () => {
+        await stockPage.enterShares(1);
+        await stockPage.submit();
 
-      await expect(stockPage.error).toHaveText(TEXT.connection.blocked);
-      await expect(stockPage.confirmDialog.root).toBeHidden();
-      await expect(stockPage.success).toBeHidden();
-    });
-  });
+        await expect(stockPage.error).toHaveText(TEXT.connection.blocked);
+        await expect(stockPage.confirmDialog.root).toBeHidden();
+        await expect(stockPage.success).toBeHidden();
+      });
+    },
+  );
 
-  test('coming back online hides the banner and says so for three seconds', {
-    tag: ['@regression'],
-  }, async ({ marketPage, context, page }) => {
-    const banner = new OfflineBanner(page);
-    const toasts = new Toast(page);
+  test(
+    'coming back online hides the banner and says so for three seconds',
+    {
+      tag: ['@regression', '@p2', '@REQ-LIVE-02'],
+    },
+    async ({ marketPage, context, page }) => {
+      const banner = new OfflineBanner(page);
+      const toasts = new Toast(page);
 
-    await marketPage.goto();
-    await context.setOffline(true);
-    await expect(banner.root).toBeVisible();
+      await marketPage.goto();
+      await context.setOffline(true);
+      await expect(banner.root).toBeVisible();
 
-    await context.setOffline(false);
+      await context.setOffline(false);
 
-    await expect(banner.root).toBeHidden();
-    await expect(toasts.all).toHaveCount(1);
-    await expect(toasts.all.first()).toContainText(TEXT.connection.backOnline);
+      await expect(banner.root).toBeHidden();
+      await expect(toasts.all).toHaveCount(1);
+      await expect(toasts.all.first()).toContainText(TEXT.connection.backOnline);
 
-    await test.step('and the message closes itself three seconds later', async () => {
-      await page.clock.runFor(BACK_ONLINE_MS);
+      await test.step('and the message closes itself three seconds later', async () => {
+        await page.clock.runFor(BACK_ONLINE_MS);
 
-      await expect(toasts.all).toHaveCount(0);
-    });
-  });
+        await expect(toasts.all).toHaveCount(0);
+      });
+    },
+  );
 });

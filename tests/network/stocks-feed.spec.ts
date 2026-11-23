@@ -40,99 +40,112 @@ const TWO_STOCKS = [
 test.describe('When the price list will not load', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('the Market page says so, and Try again brings the stocks back', {
-    tag: ['@network', '@regression'],
-  }, async ({ page, marketPage }) => {
-    await page.route(STOCKS_FEED, (route) => route.abort());
+  test(
+    'the Market page says so, and Try again brings the stocks back',
+    {
+      tag: ['@network', '@regression', '@p2', '@REQ-MARKET-04'],
+    },
+    async ({ page, marketPage }) => {
+      await page.route(STOCKS_FEED, (route) => route.abort());
 
-    await marketPage.gotoWithoutPrices();
+      await marketPage.gotoWithoutPrices();
 
-    await expect(marketPage.errorBox).toBeVisible();
-    await expect(marketPage.errorBox).toContainText(TEXT.market.errorTitle);
-    await expect(marketPage.errorBox).toContainText(TEXT.market.errorBody);
-    await expect(marketPage.table).toBeHidden();
-    await expect(marketPage.loadingBox).toBeHidden();
+      await expect(marketPage.errorBox).toBeVisible();
+      await expect(marketPage.errorBox).toContainText(TEXT.market.errorTitle);
+      await expect(marketPage.errorBox).toContainText(TEXT.market.errorBody);
+      await expect(marketPage.table).toBeHidden();
+      await expect(marketPage.loadingBox).toBeHidden();
 
-    await test.step('with the server back, Try again loads all eight rows', async () => {
-      await page.unroute(STOCKS_FEED);
+      await test.step('with the server back, Try again loads all eight rows', async () => {
+        await page.unroute(STOCKS_FEED);
 
-      await marketPage.retry();
+        await marketPage.retry();
 
-      await expect(marketPage.errorBox).toBeHidden();
-      await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
-      await marketPage.waitUntilReady();
-    });
-  });
+        await expect(marketPage.errorBox).toBeHidden();
+        await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
+        await marketPage.waitUntilReady();
+      });
+    },
+  );
 
-  test('the Stock page shows the same load error', { tag: ['@network', '@regression'] }, async ({
-    page,
-    stockPage,
-  }) => {
-    await page.route(STOCKS_FEED, (route) => route.abort());
+  test(
+    'the Stock page shows the same load error',
+    { tag: ['@network', '@regression', '@p2', '@REQ-MARKET-04'] },
+    async ({ page, stockPage }) => {
+      await page.route(STOCKS_FEED, (route) => route.abort());
 
-    await stockPage.gotoExpectingTrouble('KRYL');
+      await stockPage.gotoExpectingTrouble('KRYL');
 
-    await expect(stockPage.loadError).toBeVisible();
-    await expect(stockPage.loadError).toContainText(TEXT.market.errorTitle);
-    await expect(stockPage.retryButton).toBeVisible();
-    await expect(stockPage.price).toHaveCount(0);
-    await expect(stockPage.notFound).toHaveCount(0);
-  });
+      await expect(stockPage.loadError).toBeVisible();
+      await expect(stockPage.loadError).toContainText(TEXT.market.errorTitle);
+      await expect(stockPage.retryButton).toBeVisible();
+      await expect(stockPage.price).toHaveCount(0);
+      await expect(stockPage.notFound).toHaveCount(0);
+    },
+  );
 });
 
 test.describe('While the price list is on its way', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('the grey loading rows show first, and the real rows take their place', {
-    tag: ['@network', '@regression'],
-  }, async ({ page, marketPage }) => {
-    // The request is held until this test lets it go. A promise, not a timer:
-    // the test decides when the server answers, so nothing is left to luck.
-    let letItThrough = (): void => {};
-    const held = new Promise<void>((resolve) => {
-      letItThrough = resolve;
-    });
+  test(
+    'the grey loading rows show first, and the real rows take their place',
+    {
+      tag: ['@network', '@regression', '@p2', '@REQ-MARKET-04'],
+    },
+    async ({ page, marketPage }) => {
+      // The request is held until this test lets it go. A promise, not a timer:
+      // the test decides when the server answers, so nothing is left to luck.
+      let letItThrough = (): void => {};
+      const held = new Promise<void>((resolve) => {
+        letItThrough = resolve;
+      });
 
-    await page.route(STOCKS_FEED, async (route) => {
-      await held;
-      await route.continue();
-    });
+      await page.route(STOCKS_FEED, async (route) => {
+        await held;
+        await route.continue();
+      });
 
-    await marketPage.gotoWhileLoading();
+      await marketPage.gotoWhileLoading();
 
-    await expect(marketPage.loadingBox).toBeVisible();
-    await expect(marketPage.loadingBars).toHaveCount(LOADING_BARS);
-    await expect(marketPage.table).toBeHidden();
-    await expect(marketPage.allRows()).toHaveCount(0);
+      await expect(marketPage.loadingBox).toBeVisible();
+      await expect(marketPage.loadingBars).toHaveCount(LOADING_BARS);
+      await expect(marketPage.table).toBeHidden();
+      await expect(marketPage.allRows()).toHaveCount(0);
 
-    await test.step('and once the server answers, the stocks arrive', async () => {
-      letItThrough();
+      await test.step('and once the server answers, the stocks arrive', async () => {
+        letItThrough();
 
-      await expect(marketPage.loadingBox).toBeHidden();
-      await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
-      await marketPage.waitUntilReady();
-    });
-  });
+        await expect(marketPage.loadingBox).toBeHidden();
+        await expect(marketPage.allRows()).toHaveCount(STOCK_COUNT);
+        await marketPage.waitUntilReady();
+      });
+    },
+  );
 });
 
 test.describe('When the server sends a shorter list', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('the Market page shows exactly the stocks it was sent', {
-    tag: ['@network', '@regression'],
-  }, async ({ page, marketPage }) => {
-    await page.route(STOCKS_FEED, (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify(TWO_STOCKS),
-      }),
-    );
+  test(
+    'the Market page shows exactly the stocks it was sent',
+    {
+      tag: ['@network', '@regression', '@p2', '@REQ-MARKET-01'],
+    },
+    async ({ page, marketPage }) => {
+      await page.route(STOCKS_FEED, (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(TWO_STOCKS),
+        }),
+      );
 
-    await marketPage.goto();
+      await marketPage.goto();
 
-    await expect(marketPage.allRows()).toHaveCount(TWO_STOCKS.length);
-    expect(await marketPage.visibleSymbols()).toEqual(TWO_STOCKS.map((stock) => stock.symbol));
-    await expect(marketPage.errorBox).toBeHidden();
-  });
+      await expect(marketPage.allRows()).toHaveCount(TWO_STOCKS.length);
+      expect(await marketPage.visibleSymbols()).toEqual(TWO_STOCKS.map((stock) => stock.symbol));
+      await expect(marketPage.errorBox).toBeHidden();
+    },
+  );
 });

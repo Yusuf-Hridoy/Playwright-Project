@@ -8,41 +8,53 @@ test.describe('Logging in', () => {
     await loginPage.goto();
   });
 
-  test('trader logs in and lands on the market with their cash in the menu', {
-    tag: ['@smoke', '@regression'],
-  }, async ({ loginPage, marketPage, topMenu }) => {
-    await loginPage.logIn(TRADER.email, TRADER.password);
+  test(
+    'trader logs in and lands on the market with their cash in the menu',
+    {
+      tag: ['@smoke', '@regression', '@p1', '@REQ-AUTH-01'],
+    },
+    async ({ loginPage, marketPage, topMenu }) => {
+      await loginPage.logIn(TRADER.email, TRADER.password);
 
-    await marketPage.waitUntilReady();
+      await marketPage.waitUntilReady();
 
-    await expect(topMenu.cash).toContainText(money(TRADER.start.cashCents));
-    await expect(topMenu.cash).toHaveAttribute('data-cents', String(TRADER.start.cashCents));
-  });
+      await expect(topMenu.cash).toContainText(money(TRADER.start.cashCents));
+      await expect(topMenu.cash).toHaveAttribute('data-cents', String(TRADER.start.cashCents));
+    },
+  );
 
-  test('a wrong password is refused and the log in page stays put', { tag: ['@regression'] }, async ({
-    loginPage,
-  }) => {
-    await loginPage.logIn(TRADER.email, 'Wrong123!');
+  test(
+    'a wrong password is refused and the log in page stays put',
+    { tag: ['@regression', '@p1', '@REQ-AUTH-02'] },
+    async ({ loginPage }) => {
+      await loginPage.logIn(TRADER.email, 'Wrong123!');
 
-    await expect(loginPage.error).toHaveText(TEXT.login.wrongPair);
-    await expect(loginPage.submitButton).toBeVisible();
-  });
+      await expect(loginPage.error).toHaveText(TEXT.login.wrongPair);
+      await expect(loginPage.submitButton).toBeVisible();
+    },
+  );
 
-  test('empty fields are refused before anything is sent', { tag: ['@regression'] }, async ({ loginPage }) => {
-    await loginPage.submitEmpty();
+  test(
+    'empty fields are refused before anything is sent',
+    { tag: ['@regression', '@p1', '@REQ-AUTH-02'] },
+    async ({ loginPage }) => {
+      await loginPage.submitEmpty();
 
-    await expect(loginPage.error).toHaveText(TEXT.login.missingFields);
-    await expect(loginPage.submitButton).toBeVisible();
-  });
+      await expect(loginPage.error).toHaveText(TEXT.login.missingFields);
+      await expect(loginPage.submitButton).toBeVisible();
+    },
+  );
 
-  test('Use fills in a demo account without logging anyone in', { tag: ['@regression'] }, async ({
-    loginPage,
-  }) => {
-    await loginPage.useDemoAccount(NEWBIE.email);
+  test(
+    'Use fills in a demo account without logging anyone in',
+    { tag: ['@regression', '@p2', '@REQ-AUTH-01'] },
+    async ({ loginPage }) => {
+      await loginPage.useDemoAccount(NEWBIE.email);
 
-    await expect(loginPage.emailField).toHaveValue(NEWBIE.email);
-    await expect(loginPage.passwordField).toHaveValue(DEMO_PASSWORD);
-    await expect(loginPage.submitButton).toBeVisible();
-    await expect(loginPage.error).toBeEmpty();
-  });
+      await expect(loginPage.emailField).toHaveValue(NEWBIE.email);
+      await expect(loginPage.passwordField).toHaveValue(DEMO_PASSWORD);
+      await expect(loginPage.submitButton).toBeVisible();
+      await expect(loginPage.error).toBeEmpty();
+    },
+  );
 });

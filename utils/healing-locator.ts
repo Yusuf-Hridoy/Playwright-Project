@@ -161,7 +161,7 @@ const BUILDS_A_LOCATOR: ReadonlySet<string> = new Set([
 
 /** Joins the ways into one locator that matches whichever of them is there. */
 function anyOf(ways: readonly LocatorWay[]): Locator {
-  return ways.slice(1).reduce((chain, way) => chain.or(way.locator), ways[0]!.locator);
+  return ways.slice(1).reduce((chain, way) => chain.or(way.locator), ways[0].locator);
 }
 
 export function healing(options: HealingOptions): Locator {
@@ -169,7 +169,7 @@ export function healing(options: HealingOptions): Locator {
   if (ways.length === 0) {
     throw new Error(`${where} ${element} was given no way to find itself.`);
   }
-  const first = ways[0]!;
+  const first = ways[0];
   if (ways.length === 1) return first.locator;
 
   const chain = anyOf(ways);

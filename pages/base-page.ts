@@ -28,7 +28,10 @@ export abstract class BasePage {
   protected readonly marketClosed: boolean;
   protected readonly switches: AppSwitches;
 
-  constructor(readonly page: Page, options: PageObjectOptions = {}) {
+  constructor(
+    readonly page: Page,
+    options: PageObjectOptions = {},
+  ) {
     this.topMenu = new TopMenu(page);
     this.marketClosed = options.marketClosed === true;
     this.switches = options.switches ?? NO_SWITCHES;
@@ -49,7 +52,10 @@ export abstract class BasePage {
    * Goes to one of the app's pages. app-paths.ts picks /market or /market.html
    * to suit the host, and always adds ?seed=42 so prices repeat.
    */
-  protected async open(target: AppPage, query: Readonly<Record<string, string>> = {}): Promise<void> {
+  protected async open(
+    target: AppPage,
+    query: Readonly<Record<string, string>> = {},
+  ): Promise<void> {
     await this.page.goto(this.urlFor(target, query));
     await this.waitUntilReady();
   }

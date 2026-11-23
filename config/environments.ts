@@ -32,7 +32,9 @@ function readEnvironmentName(): EnvironmentName {
   const raw = (process.env.TEST_ENV ?? '').trim().toLowerCase();
   if (raw === 'production' || raw === 'local') return raw;
   if (raw !== '') {
-    throw new Error(`TEST_ENV must be "production" or "local", but it is "${process.env.TEST_ENV}".`);
+    throw new Error(
+      `TEST_ENV must be "production" or "local", but it is "${process.env.TEST_ENV}".`,
+    );
   }
   return DEFAULT_ENVIRONMENT;
 }

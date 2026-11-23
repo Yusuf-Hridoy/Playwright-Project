@@ -1,5 +1,6 @@
-# The quick gate on every change to this repo: does it compile, and do the
-# main journeys still work against the live app?
+# The quick gate on every change to this repo: does it lint, is it formatted,
+# is every test tagged, does it compile, and do the main journeys still work
+# against the live app?
 name: checks
 
 on:
@@ -17,10 +18,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The one place the Playwright version is read. Every job below runs inside
+  # the image this prints, so a Dependabot bump of @playwright/test moves the
+  # image with it and there is nothing to edit by hand.
+  version:
+    name: Work out the Playwright image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      image: ${{ steps.read.outputs.image }}
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Read the Playwright version from package.json
+        id: read
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').devDependencies['@playwright/test']")"
+          echo "Playwright is $version"
+          echo "image=mcr.microsoft.com/playwright:v${version}-noble" >> "$GITHUB_OUTPUT"
+
   checks:
-    name: Typecheck and smoke tests
+    name: Lint, typecheck and smoke tests
+    needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    # Every browser is already installed in this image, at the version that
+    # matches @playwright/test.
+    container:
+      image: ${{ needs.version.outputs.image }}
+
+    env:
+      # What Playwright's own documentation asks for, so Firefox can write to
+      # a home directory inside the container.
+      HOME: /root
 
     steps:
       - name: Check out the tests
@@ -35,12 +68,17 @@ jobs:
       - name: Install the dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Check the formatting
+        run: npm run format:check
+
+      - name: Check that every test is tagged
+        run: node scripts/check-test-tags.mjs
+
       - name: Typecheck
         run: npm run typecheck
-
-      # Only the browser this job uses. Firefox and WebKit belong to nightly.
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
 
       - name: Run the smoke tests against the live app
         run: npx playwright test --project=chromium --grep @smoke

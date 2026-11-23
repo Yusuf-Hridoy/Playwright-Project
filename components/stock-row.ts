@@ -18,7 +18,10 @@ export class StockRow {
   readonly watchStar: Locator;
   readonly tradeLink: Locator;
 
-  constructor(page: Page, readonly symbol: string) {
+  constructor(
+    page: Page,
+    readonly symbol: string,
+  ) {
     // data-symbol is how the app labels each row. Pairing it with the test id
     // keeps the lookup on app data, with no class names and no XPath.
     this.root = healing({
@@ -30,7 +33,10 @@ export class StockRow {
           locator: page.getByTestId('market-row').and(page.locator(`[data-symbol="${symbol}"]`)),
         },
         // Every row of the table is a row, and only one of them says KRYL.
-        { how: 'the table row that mentions the symbol', locator: page.getByRole('row').filter({ hasText: symbol }) },
+        {
+          how: 'the table row that mentions the symbol',
+          locator: page.getByRole('row').filter({ hasText: symbol }),
+        },
       ],
     });
 
@@ -43,7 +49,10 @@ export class StockRow {
       element: `${symbol} Trade link`,
       ways: [
         { how: 'test id row-trade', locator: this.root.getByTestId('row-trade') },
-        { how: 'the only link in the row', locator: this.root.getByRole('link', { name: TEXT.market.trade }) },
+        {
+          how: 'the only link in the row',
+          locator: this.root.getByRole('link', { name: TEXT.market.trade }),
+        },
       ],
     });
   }

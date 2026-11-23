@@ -1,0 +1,16 @@
+node_modules/
+playwright-report/
+blob-report/
+test-results/
+heal-report/
+flaky-report/
+
+# Screenshots and other binaries Prettier has no business rewriting.
+**/*-snapshots/
+*.png
+
+# npm writes this file; nobody edits it by hand.
+package-lock.json
+
+# Written by scripts/requirements-coverage.mjs, not by a person.
+docs/requirements-coverage.md

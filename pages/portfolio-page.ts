@@ -36,7 +36,10 @@ export class PortfolioPage extends BasePage {
       element: 'total gain card',
       ways: [
         { how: 'test id stat-total-gain', locator: page.getByTestId('stat-total-gain') },
-        { how: 'renamed test id stat-total-gain', locator: page.getByTestId(renamedTestId('stat-total-gain')) },
+        {
+          how: 'renamed test id stat-total-gain',
+          locator: page.getByTestId(renamedTestId('stat-total-gain')),
+        },
       ],
     });
 
@@ -82,10 +85,15 @@ export class PortfolioPage extends BasePage {
       ways: [
         {
           how: 'test id holding-row with data-symbol',
-          locator: this.page.getByTestId('holding-row').and(this.page.locator(`[data-symbol="${symbol}"]`)),
+          locator: this.page
+            .getByTestId('holding-row')
+            .and(this.page.locator(`[data-symbol="${symbol}"]`)),
         },
         // Only one row of the holdings table mentions this symbol.
-        { how: 'the table row that mentions the symbol', locator: this.page.getByRole('row').filter({ hasText: symbol }) },
+        {
+          how: 'the table row that mentions the symbol',
+          locator: this.page.getByRole('row').filter({ hasText: symbol }),
+        },
       ],
     });
   }
@@ -102,7 +110,10 @@ export class PortfolioPage extends BasePage {
       ways: [
         { how: 'test id holding-shares', locator: row.getByTestId('holding-shares') },
         // The only cell in the row that counts something in shares.
-        { how: 'the cell in the row that reads a number of shares', locator: row.getByRole('cell', { name: /^\d+ shares?$/ }) },
+        {
+          how: 'the cell in the row that reads a number of shares',
+          locator: row.getByRole('cell', { name: /^\d+ shares?$/ }),
+        },
       ],
     });
   }
@@ -155,6 +166,8 @@ export class PortfolioPage extends BasePage {
 
   /** The symbols of the rows, in the order the table shows them. */
   async order(): Promise<string[]> {
-    return this.allRows().evaluateAll((rows) => rows.map((row) => row.getAttribute('data-symbol') ?? ''));
+    return this.allRows().evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute('data-symbol') ?? ''),
+    );
   }
 }

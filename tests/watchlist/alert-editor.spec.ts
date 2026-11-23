@@ -80,81 +80,86 @@ test.describe('What the alert editor refuses', () => {
   test.use({ storageState: TRADER.storageState });
 
   for (const bad of BAD_ALERTS) {
-    test(`the editor refuses ${bad.what}`, { tag: ['@regression'] }, async ({ watchlistPage }) => {
-      const symbol = 'PIXEL';
-      const row = watchlistPage.row(symbol);
+    test(
+      `the editor refuses ${bad.what}`,
+      { tag: ['@regression', '@p2', '@REQ-WATCH-03'] },
+      async ({ watchlistPage }) => {
+        const symbol = 'PIXEL';
+        const row = watchlistPage.row(symbol);
 
-      await watchlistPage.goto();
-      await row.openAlert();
+        await watchlistPage.goto();
+        await row.openAlert();
 
-      const priceNowCents = await watchlistPage.alertPriceNowCents();
+        const priceNowCents = await watchlistPage.alertPriceNowCents();
 
-      if (bad.direction === 'above') await watchlistPage.alertAbove.check();
-      else await watchlistPage.alertBelow.check();
+        if (bad.direction === 'above') await watchlistPage.alertAbove.check();
+        else await watchlistPage.alertBelow.check();
 
-      await watchlistPage.alertPriceField.fill(bad.priceDollars(priceNowCents));
-      if (bad.popup) await watchlistPage.alertPopupCheckbox.check();
-      else await watchlistPage.alertPopupCheckbox.uncheck();
-      if (bad.browser) await watchlistPage.alertBrowserCheckbox.check();
-      else await watchlistPage.alertBrowserCheckbox.uncheck();
+        await watchlistPage.alertPriceField.fill(bad.priceDollars(priceNowCents));
+        if (bad.popup) await watchlistPage.alertPopupCheckbox.check();
+        else await watchlistPage.alertPopupCheckbox.uncheck();
+        if (bad.browser) await watchlistPage.alertBrowserCheckbox.check();
+        else await watchlistPage.alertBrowserCheckbox.uncheck();
 
-      await watchlistPage.alertSaveButton.click();
+        await watchlistPage.alertSaveButton.click();
 
-      await expect(watchlistPage.alertError).toHaveText(bad.error(priceNowCents));
-      await expect(watchlistPage.alertMessage).toBeEmpty();
-      await expect(row.alertStatus).toHaveText(TEXT.watchlist.noAlert);
-    });
+        await expect(watchlistPage.alertError).toHaveText(bad.error(priceNowCents));
+        await expect(watchlistPage.alertMessage).toBeEmpty();
+        await expect(row.alertStatus).toHaveText(TEXT.watchlist.noAlert);
+      },
+    );
   }
 });
 
 test.describe('Esc on the watchlist', () => {
   test.use({ storageState: TRADER.storageState });
 
-  test('Esc closes the alert editor and any pop-up that is open', { tag: ['@regression'] }, async ({
-    watchlistPage,
-    page,
-  }) => {
-    const firing = 'PIXEL';
-    const editing = 'BRISK';
-    const toasts = new Toast(page);
+  test(
+    'Esc closes the alert editor and any pop-up that is open',
+    { tag: ['@regression', '@p2', '@REQ-WATCH-03'] },
+    async ({ watchlistPage, page }) => {
+      const firing = 'PIXEL';
+      const editing = 'BRISK';
+      const toasts = new Toast(page);
 
-    await watchlistPage.goto();
+      await watchlistPage.goto();
 
-    const targetCents = await test.step('set an alert a cent above the price', async () => {
-      await watchlistPage.row(firing).openAlert();
-      const priceNowCents = await watchlistPage.alertPriceNowCents();
-      const wantedCents = priceNowCents + 1;
+      const targetCents = await test.step('set an alert a cent above the price', async () => {
+        await watchlistPage.row(firing).openAlert();
+        const priceNowCents = await watchlistPage.alertPriceNowCents();
+        const wantedCents = priceNowCents + 1;
 
-      await watchlistPage.saveAlert({
-        direction: 'above',
-        priceDollars: dollars(wantedCents),
-        popup: true,
+        await watchlistPage.saveAlert({
+          direction: 'above',
+          priceDollars: dollars(wantedCents),
+          popup: true,
+        });
+
+        await expect(watchlistPage.alertMessage).toHaveText(
+          alertSaved(firing, 'above', money(wantedCents)),
+        );
+        return wantedCents;
       });
 
-      await expect(watchlistPage.alertMessage).toHaveText(
-        alertSaved(firing, 'above', money(wantedCents)),
-      );
-      return wantedCents;
-    });
+      await test.step('let the price cross it, so a pop-up is on screen', async () => {
+        for (let tick = 0; tick < MOST_TICKS && (await toasts.count()) === 0; tick += 1) {
+          await page.clock.runFor(TICK_MS);
+        }
+        await expect(toasts.bySymbol(firing)).toBeVisible();
+        expect(targetCents).toBeGreaterThan(0);
+      });
 
-    await test.step('let the price cross it, so a pop-up is on screen', async () => {
-      for (let tick = 0; tick < MOST_TICKS && (await toasts.count()) === 0; tick += 1) {
-        await page.clock.runFor(TICK_MS);
-      }
-      await expect(toasts.bySymbol(firing)).toBeVisible();
-      expect(targetCents).toBeGreaterThan(0);
-    });
+      await test.step('with the editor open on another stock, Esc clears both', async () => {
+        await watchlistPage.row(editing).openAlert();
+        await expect(watchlistPage.alertEditorClosedHint).toBeHidden();
 
-    await test.step('with the editor open on another stock, Esc clears both', async () => {
-      await watchlistPage.row(editing).openAlert();
-      await expect(watchlistPage.alertEditorClosedHint).toBeHidden();
+        await watchlistPage.pressEscape();
 
-      await watchlistPage.pressEscape();
-
-      await expect(watchlistPage.alertEditorClosedHint).toBeVisible();
-      await expect(watchlistPage.alertEditorClosedHint).toHaveText(TEXT.alertEditor.closedHint);
-      await expect(watchlistPage.alertSaveButton).toBeHidden();
-      await expect(toasts.all).toHaveCount(0);
-    });
-  });
+        await expect(watchlistPage.alertEditorClosedHint).toBeVisible();
+        await expect(watchlistPage.alertEditorClosedHint).toHaveText(TEXT.alertEditor.closedHint);
+        await expect(watchlistPage.alertSaveButton).toBeHidden();
+        await expect(toasts.all).toHaveCount(0);
+      });
+    },
+  );
 });

@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Dhaka
+    open-pull-requests-limit: 5
+    groups:
+      # These two share playwright-core. Bumping one without the other leaves
+      # two copies of it in node_modules, and the types stop matching.
+      # The Docker image CI runs in is read from @playwright/test, so this
+      # group moves the image as well.
+      playwright:
+        patterns:
+          - '@playwright/test'
+          - '@axe-core/playwright'
+      code-quality:
+        patterns:
+          - eslint
+          - '@eslint/*'
+          - typescript-eslint
+          - eslint-plugin-*
+          - eslint-config-*
+          - prettier
+          - husky
+          - lint-staged
+    ignore:
+      # typescript-eslint will not load against the TypeScript 7 API, so the
+      # type-aware rules need the 6.x one. Lift this the day typescript-eslint
+      # supports 7, and bump typescript in the same pull request.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Dhaka
+    open-pull-requests-limit: 5

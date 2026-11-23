@@ -25,6 +25,19 @@ the app slow and unreliable to prove the tests wait properly. See
 The full run goes out every night and the merged report is published at
 <https://yusuf-hridoy.github.io/Playwright-Project/>.
 
+## At a glance
+
+- **130 tests**, plus the log in setup
+- **9 projects**: `setup`, `chromium`, `firefox`, `webkit`, `mobile`,
+  `bug-hunt`, `drift`, `resilience`, `quarantine`
+- **47 of 50 requirements covered** — see
+  [the coverage table](docs/requirements-coverage.md)
+- **Bugs caught: 5 of 5** in the bug hunt
+- The app under test: <https://practiceapp-six.vercel.app>
+- The nightly report: <https://yusuf-hridoy.github.io/Playwright-Project/>
+- The last 30 nights: <https://yusuf-hridoy.github.io/Playwright-Project/history.html>
+- How to work on this repo: [CONTRIBUTING.md](CONTRIBUTING.md)
+
 ## How the parts fit together
 
 ```mermaid
@@ -61,23 +74,23 @@ npx playwright install chromium firefox webkit
 npm test
 ```
 
-| Command | What it does |
-| --- | --- |
-| `npm test` | Every test, in every project |
-| `npm run test:smoke` | The smoke tests, in all three browsers |
-| `npm run test:regression` | Every tagged test |
-| `npm run test:a11y` | The 9 accessibility checks |
-| `npm run test:visual` | The 3 screenshot checks, in Chromium |
-| `npm run test:mobile` | The 3 phone tests, on a Pixel 7 |
-| `npm run test:cross-browser` | The smoke tests in Firefox and WebKit only |
-| `npm run test:bug-hunt` | The 5 bug-hunt tests, and the score at the end |
-| `npm run test:drift` | The 9 self-healing tests, and the heal report |
-| `npm run test:resilience` | The 5 slow and flaky tests |
-| `npm run test:quarantine` | Whatever is parked in quarantine right now |
-| `npm run update-snapshots` | Writes new screenshot baselines for this machine |
-| `npm run test:headed` | The same, with a browser you can watch |
-| `npm run report` | Opens the HTML report of the last run |
-| `npm run typecheck` | TypeScript only, no browser |
+| Command                      | What it does                                     |
+| ---------------------------- | ------------------------------------------------ |
+| `npm test`                   | Every test, in every project                     |
+| `npm run test:smoke`         | The smoke tests, in all three browsers           |
+| `npm run test:regression`    | Every tagged test                                |
+| `npm run test:a11y`          | The 9 accessibility checks                       |
+| `npm run test:visual`        | The 3 screenshot checks, in Chromium             |
+| `npm run test:mobile`        | The 3 phone tests, on a Pixel 7                  |
+| `npm run test:cross-browser` | The smoke tests in Firefox and WebKit only       |
+| `npm run test:bug-hunt`      | The 5 bug-hunt tests, and the score at the end   |
+| `npm run test:drift`         | The 9 self-healing tests, and the heal report    |
+| `npm run test:resilience`    | The 5 slow and flaky tests                       |
+| `npm run test:quarantine`    | Whatever is parked in quarantine right now       |
+| `npm run update-snapshots`   | Writes new screenshot baselines for this machine |
+| `npm run test:headed`        | The same, with a browser you can watch           |
+| `npm run report`             | Opens the HTML report of the last run            |
+| `npm run typecheck`          | TypeScript only, no browser                      |
 
 ### Against a copy on your laptop
 
@@ -106,17 +119,17 @@ first line.
 
 ## The projects
 
-| Project | Device | What it runs |
-| --- | --- | --- |
-| `setup` | Desktop Chrome | Logs in as all three demo accounts and saves the sessions |
-| `chromium` | Desktop Chrome | Every test except `@mobile` |
-| `firefox` | Desktop Firefox | `@smoke` only |
-| `webkit` | Desktop Safari | `@smoke` only |
-| `mobile` | Pixel 7 | `@mobile` only |
-| `bug-hunt` | Desktop Chrome | `@bug-hunt` only: the app's own bugs, switched on |
-| `drift` | Desktop Chrome | `@drift` only: the app renamed, re-idded and moved |
-| `resilience` | Desktop Chrome | `@resilience` only: a slow app and a flaky one |
-| `quarantine` | Desktop Chrome | `@quarantine` only, with no retries |
+| Project      | Device          | What it runs                                              |
+| ------------ | --------------- | --------------------------------------------------------- |
+| `setup`      | Desktop Chrome  | Logs in as all three demo accounts and saves the sessions |
+| `chromium`   | Desktop Chrome  | Every test except `@mobile`                               |
+| `firefox`    | Desktop Firefox | `@smoke` only                                             |
+| `webkit`     | Desktop Safari  | `@smoke` only                                             |
+| `mobile`     | Pixel 7         | `@mobile` only                                            |
+| `bug-hunt`   | Desktop Chrome  | `@bug-hunt` only: the app's own bugs, switched on         |
+| `drift`      | Desktop Chrome  | `@drift` only: the app renamed, re-idded and moved        |
+| `resilience` | Desktop Chrome  | `@resilience` only: a slow app and a flaky one            |
+| `quarantine` | Desktop Chrome  | `@quarantine` only, with no retries                       |
 
 `chromium` leaves out `@mobile`, `@bug-hunt`, `@drift`, `@resilience` and
 `@quarantine`, so each of those areas runs in the one project built for it and
@@ -131,39 +144,50 @@ takes three times as long gets run three times less often.
 
 ## Tags
 
-| Tag | What it marks |
-| --- | --- |
-| `@smoke` | The main journeys. Also run in Firefox and WebKit |
-| `@regression` | Every test carries this one |
-| `@a11y` | An axe-core pass over one page |
-| `@visual` | A screenshot compared against a baseline |
-| `@network` | A test that holds back, breaks or rewrites a request |
-| `@mobile` | A phone test, run only in the `mobile` project |
-| `@bug-hunt` | One of the app's bugs, switched on against a shared check |
-| `@drift` | A journey run against a renamed, re-idded, moved app |
-| `@resilience` | A slow app, or one that drops the odd request |
-| `@quarantine` | Parked: it runs, but it cannot turn the main run red |
+| Tag           | What it marks                                             |
+| ------------- | --------------------------------------------------------- |
+| `@smoke`      | The main journeys. Also run in Firefox and WebKit         |
+| `@regression` | Every test carries this one                               |
+| `@a11y`       | An axe-core pass over one page                            |
+| `@visual`     | A screenshot compared against a baseline                  |
+| `@network`    | A test that holds back, breaks or rewrites a request      |
+| `@mobile`     | A phone test, run only in the `mobile` project            |
+| `@bug-hunt`   | One of the app's bugs, switched on against a shared check |
+| `@drift`      | A journey run against a renamed, re-idded, moved app      |
+| `@resilience` | A slow app, or one that drops the odd request             |
+| `@quarantine` | Parked: it runs, but it cannot turn the main run red      |
 
-The log in setup carries every tag, because each project depends on it and it
-has to survive whichever filter is used.
+Two more tags are on every test, and `npm run check:tags` fails the build when
+one is missing:
+
+| Tag                 | What it marks                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `@p1`, `@p2`, `@p3` | The priority. Exactly one per test. `@p1` is the money: log in, the session guard, buying, selling, adding money, card payments |
+| `@REQ-AREA-NN`      | The requirement from [docs/requirements.md](docs/requirements.md) that the test protects. At least one, more if it covers more  |
+
+The log in setup carries every tag, all three priorities included, because each
+project depends on it and it has to survive whichever filter is used. It is the
+one test with no requirement tag.
 
 ## What is in each folder
 
-| Folder | What lives there |
-| --- | --- |
-| `config/` | Which site to test, and the seed, clock, locale and time zone |
-| `data/` | The demo accounts, the 8 stocks, every message a test checks, the renamed labels, the flaky seeds and the known accessibility issues |
-| `builders/` | The account state builder, which writes an exact account into storage |
-| `fixtures/` | The `test` object every spec imports |
-| `pages/` | One page object per page of the app |
+| Folder        | What lives there                                                                                                                                                      |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config/`     | Which site to test, and the seed, clock, locale and time zone                                                                                                         |
+| `data/`       | The demo accounts, the 8 stocks, every message a test checks, the renamed labels, the flaky seeds and the known accessibility issues                                  |
+| `builders/`   | The account state builder, which writes an exact account into storage                                                                                                 |
+| `fixtures/`   | The `test` object every spec imports                                                                                                                                  |
+| `pages/`      | One page object per page of the app                                                                                                                                   |
 | `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups, the card payment frame, the news box, the chart hover, the offline banner and the idle dialog |
-| `setup/` | Logs in once per demo account and saves the session to `.auth/` |
-| `test-files/` | The one small photo the profile tests upload |
-| `tests/` | The specs, grouped by feature |
-| `checks/` | Checks shared by an everyday test and its bug-hunt twin |
-| `reporters/` | The bug-hunt score, the heal report and the flaky list |
-| `utils/` | Money formatting, page paths, the frozen clock, backup locators, the accessibility scan and a couple of measurements |
-| `.github/` | The three CI workflows |
+| `setup/`      | Logs in once per demo account and saves the session to `.auth/`                                                                                                       |
+| `test-files/` | The one small photo the profile tests upload                                                                                                                          |
+| `tests/`      | The specs, grouped by feature                                                                                                                                         |
+| `checks/`     | Checks shared by an everyday test and its bug-hunt twin                                                                                                               |
+| `reporters/`  | The bug-hunt score, the heal report and the flaky list                                                                                                                |
+| `utils/`      | Money formatting, page paths, the frozen clock, backup locators, the accessibility scan and a couple of measurements                                                  |
+| `docs/`       | The requirement list, and the coverage table a script writes from it                                                                                                  |
+| `scripts/`    | The tag check, the coverage table and the nightly history, as plain Node                                                                                              |
+| `.github/`    | The three CI workflows, Dependabot, the pull request template and the issue forms                                                                                     |
 
 ## How the test data works
 
@@ -189,7 +213,7 @@ page loads, instead of clicking through trades:
 ```ts
 await accountState
   .forUser(TRADER)
-  .withCash(50_000)                                          // cents, so $500.00
+  .withCash(50_000) // cents, so $500.00
   .withHolding('KRYL', { shares: 10, totalPaidCents: 140_000 })
   .withWatchlist(['NOVA', 'KRYL'])
   .withAlert('NOVA', { direction: 'above', priceCents: 5_500 })
@@ -231,7 +255,7 @@ Pressing Pay starts a two second "Processing…" timer inside the frame. The
 clock is frozen, so nothing moves on its own. That gives a test two ways in:
 
 ```ts
-await walletPage.paymentFrame.pay();              // press Pay and stop there
+await walletPage.paymentFrame.pay(); // press Pay and stop there
 await expect(walletPage.paymentFrame.processingButton).toBeVisible();
 await walletPage.paymentFrame.finishProcessing(); // let the two seconds pass
 ```
@@ -327,13 +351,13 @@ healthy app, the bug-hunt test on a broken one. That is what makes the result
 mean something. A check written only for the bug hunt would prove nothing
 about the tests that run every day.
 
-| Bug | What the app gets wrong | The shared check, and the everyday test that calls it |
-| --- | --- | --- |
-| `cost` | From two shares up, the total charges for one share too many | `expectBuyTotalIsRight` — *buying 5 KRYL takes the same cash in the summary, the message and the menu* |
-| `gain` | Every gain is shown with the sign turned round | `expectEachGainIsRight` — *total worth is the cash plus every holding at today price* |
-| `limit` | Top-ups run on to $60,000 while the note still says $50,000 | `expectTopUpsStopAtTheLimit` — *top-ups stop once the account has added $50,000 in all* |
-| `sort` | "Sort by gain" puts the smallest gain first | `expectSortByGainPutsTheBiggestFirst` — *"Sort by gain" puts the biggest gain at the top* |
-| `search` | The search box insists on the exact letter case | `expectSearchFindsOnly` — *searching for "robot" leaves only Kryl Robotics* |
+| Bug      | What the app gets wrong                                      | The shared check, and the everyday test that calls it                                                  |
+| -------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `cost`   | From two shares up, the total charges for one share too many | `expectBuyTotalIsRight` — _buying 5 KRYL takes the same cash in the summary, the message and the menu_ |
+| `gain`   | Every gain is shown with the sign turned round               | `expectEachGainIsRight` — _total worth is the cash plus every holding at today price_                  |
+| `limit`  | Top-ups run on to $60,000 while the note still says $50,000  | `expectTopUpsStopAtTheLimit` — _top-ups stop once the account has added $50,000 in all_                |
+| `sort`   | "Sort by gain" puts the smallest gain first                  | `expectSortByGainPutsTheBiggestFirst` — _"Sort by gain" puts the biggest gain at the top_              |
+| `search` | The search box insists on the exact letter case              | `expectSearchFindsOnly` — _searching for "robot" leaves only Kryl Robotics_                            |
 
 **How to run it.** `npm run test:bug-hunt`.
 
@@ -341,7 +365,7 @@ about the tests that run every day.
 Playwright reads it the other way round from every other test here:
 
 - **green** — the check failed, so the bug was caught. That is the good result.
-- **red**, with *"expected to fail, but passed"* — the bug slipped through.
+- **red**, with _"expected to fail, but passed"_ — the bug slipped through.
   The everyday test that shares that check has stopped checking what its name
   says it checks.
 
@@ -369,8 +393,14 @@ this.submitButton = healing({
   where: 'LoginPage',
   element: 'submit button',
   ways: [
-    { how: 'role button named Log in', locator: page.getByRole('button', { name: TEXT.login.submit }) },
-    { how: 'role button named log in or sign in', locator: page.getByRole('button', { name: LOG_IN }) },
+    {
+      how: 'role button named Log in',
+      locator: page.getByRole('button', { name: TEXT.login.submit }),
+    },
+    {
+      how: 'role button named log in or sign in',
+      locator: page.getByRole('button', { name: LOG_IN }),
+    },
   ],
 });
 ```
@@ -400,9 +430,9 @@ interrupted, because that would mean the app really changed.
 **How to read the heal report.** `npm run test:drift` writes
 `heal-report/heal-report.md` (and `.json` for tools):
 
-| Page object | Element | What failed | What worked | Tests |
-| --- | --- | --- | --- | --- |
-| LoginPage | submit button | role button named Log in | role button named log in or sign in | 2 |
+| Page object | Element       | What failed              | What worked                         | Tests |
+| ----------- | ------------- | ------------------------ | ----------------------------------- | ----- |
+| LoginPage   | submit button | role button named Log in | role button named log in or sign in | 2     |
 
 Every row is a locator to update. Healing is a warning, never a fix: the suite
 keeps running so the night is not wasted, and the row says what to put right in
@@ -495,9 +525,9 @@ entry is a bug to fix in the app, not a test that was made to pass.
 **The list is empty today**, so every rule is checked on every page. The two
 problems that used to sit there were both fixed in the app:
 
-| Page | Rule | What the app used to do, and what it does now |
-| --- | --- | --- |
-| log in | `link-in-text-block` | The "How it works" link inside the footer was told apart from the words around it by colour alone. Links are underlined now, in both themes. |
+| Page                 | Rule                          | What the app used to do, and what it does now                                                                                                                                                                              |
+| -------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| log in               | `link-in-text-block`          | The "How it works" link inside the footer was told apart from the words around it by colour alone. Links are underlined now, in both themes.                                                                               |
 | every signed-in page | `label-content-name-mismatch` | The profile circle showed the initials "TR" while its `aria-label` was only "Your profile". The label now starts with the visible text ("TR, your profile"), or with the display name when a photo leaves no visible text. |
 
 ## Visual checks
@@ -540,17 +570,17 @@ looking is a check that has stopped checking.
 
 ## Continuous integration
 
-Three workflows live in `.github/workflows/`. All of them run on
-`ubuntu-latest`, install with `npm ci`, and pull in only the browsers that job
-actually needs. Each one is given the smallest set of permissions that lets it
-do its job. Whenever tests fail, the HTML report is kept as an artifact for 14
-days.
+Three workflows live in `.github/workflows/`. Every job that runs a test runs
+inside Playwright's own Docker image, at the version in `package.json`, so the
+browsers are already there and no job installs one. Each workflow is given the
+smallest set of permissions that lets it do its job. Whenever tests fail, the
+HTML report is kept as an artifact for 14 days.
 
-| Workflow | When it runs | What it does |
-| --- | --- | --- |
-| `checks.yml` | every push to `main`, every pull request | `npm run typecheck`, then the `@smoke` tests on Chromium against the live app |
-| `nightly.yml` | 20:00 UTC daily (02:00 Dhaka), or by hand | the whole suite, every project but `quarantine`, in three shards, merged into one HTML report and published to GitHub Pages; quarantine runs in a job of its own that is allowed to fail |
-| `update-linux-screenshots.yml` | by hand only | writes the Linux screenshot baselines and commits just the `-linux.png` files |
+| Workflow                       | When it runs                              | What it does                                                                                                                                                                             |
+| ------------------------------ | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `checks.yml`                   | every push to `main`, every pull request  | `npm run lint`, `npm run format:check`, the tag check, `npm run typecheck`, then the `@smoke` tests on Chromium against the live app                                                     |
+| `nightly.yml`                  | 20:00 UTC daily (02:00 Dhaka), or by hand | the whole suite, every project but `quarantine`, in three shards, merged into one HTML report and published to GitHub Pages; quarantine runs in a job of its own that is allowed to fail |
+| `update-linux-screenshots.yml` | by hand only                              | writes the Linux screenshot baselines and commits just the `-linux.png` files                                                                                                            |
 
 **The nightly report is at <https://yusuf-hridoy.github.io/Playwright-Project/>.**
 It is replaced by each nightly run, so it always shows the most recent full
@@ -590,6 +620,130 @@ The same run can be started by hand from the app repository's Actions tab.
 `playwright.config.ts` reads `process.env.CI` and nothing else: two retries, two
 workers, and `forbidOnly` so a stray `test.only` cannot quietly shrink the
 suite. Everything else is the same as on a laptop.
+
+## How this repo is run
+
+### The code checks, and what happens when you commit
+
+ESLint runs the recommended TypeScript rules **with type information**, which
+is what makes `@typescript-eslint/no-floating-promises` work: it is the rule
+that catches a missing `await` in front of an `expect` or a page action.
+Alongside it, `eslint-plugin-playwright` runs on every file that drives a
+browser, and seven of its rules are errors on purpose — a missing await,
+`waitForTimeout`, `test.only`, `test.skip`, `{ force: true }`, `page.pause()`,
+and an assertion that is not web-first. Prettier settles the formatting, and
+`eslint-config-prettier` comes last so the two never argue.
+
+```bash
+npm run lint           # ESLint over everything
+npm run format         # Prettier, writing
+npm run format:check   # Prettier, only telling you
+npm run typecheck      # tsc --noEmit
+```
+
+A Git hook runs before every commit. It runs `lint-staged`, which runs
+`eslint --fix` and then `prettier --write` over **the staged files only**, and
+puts the fixed versions back into the commit. If ESLint still finds an error
+after its own `--fix`, the commit stops. `npm ci` installs the hook; CI skips
+that, because CI makes no commits.
+
+`typescript` is held at 6.x on purpose. typescript-eslint will not load against
+the TypeScript 7 API, and the type-aware rules are worth more here than the
+newer compiler.
+
+### Why CI runs in Docker, and how the image follows package.json
+
+A test that passes on a laptop and fails on CI usually fails because the two
+machines are not the same machine. Every CI job that runs a test now runs
+inside `mcr.microsoft.com/playwright:v<version>-noble`, the image Playwright
+publishes with the browsers already installed at the exact version they were
+built for.
+
+The version is read in one place. A small first job in each workflow reads
+`@playwright/test` out of `package.json` and prints the image name:
+
+```yaml
+version="$(node -p "require('./package.json').devDependencies['@playwright/test']")"
+echo "image=mcr.microsoft.com/playwright:v${version}-noble" >> "$GITHUB_OUTPUT"
+```
+
+Every other job takes it with `needs: version` and
+`container: { image: ${{ needs.version.outputs.image }} }`. A Dependabot bump
+of `@playwright/test` therefore moves the image as well, with nothing to keep
+in step by hand. The Pages publish job runs no tests, so it stays on the plain
+runner.
+
+The screenshots are per image as well as per platform. After the image
+changes, run **update-linux-screenshots** once from the Actions tab and pull
+the new baselines.
+
+### Requirements, and how to read the coverage table
+
+[`docs/requirements.md`](docs/requirements.md) is 50 rules the app promises,
+one short sentence each, taken from the app's own Rules page, its pages and its
+test switches. Each has an ID, like `REQ-TRADE-01`.
+
+Every test carries the IDs of the behaviour it protects. A bug-hunt, drift or
+resilience test uses the same ID as the everyday test that covers the same
+behaviour, so the table shows every angle a requirement is tested from.
+
+[`docs/requirements-coverage.md`](docs/requirements-coverage.md) is written by
+a script, not by hand. For each requirement it gives the number of tests and
+their names, grouped by area, then a **Not covered yet** list and the total.
+Rebuild it after changing a tag or a requirement:
+
+```bash
+npm run coverage:requirements
+```
+
+Commit the file it writes. A requirement with no test is allowed — it is shown,
+not treated as a failure. A test that uses an ID that is not in the list is an
+error, and `npm run check:tags` says which test and which ID.
+
+### Priorities, and the two minute run
+
+Every test carries exactly one of `@p1`, `@p2` or `@p3`. `@p1` is the money:
+logging in, the session guard, buying, selling, the money math, adding money
+and card payments.
+
+```bash
+npm run test:critical   # the @p1 tests on Chromium, about half a minute
+```
+
+That is the run to make before pushing anything that touches money. The full
+run still belongs to the night.
+
+### The history page
+
+The nightly run keeps the last 30 nights at
+<https://yusuf-hridoy.github.io/Playwright-Project/history.html>, beside the
+report. It shows passed, failed and flaky over the nights, a table of every
+night, and tonight's ten slowest tests. The same numbers go into the job
+summary of the run that produced them.
+
+It works by writing `history.json` next to the report. Each night fetches last
+night's copy from the published page, adds tonight, trims to 30 and publishes
+both again. The first night has nothing to fetch, which is fine.
+
+### Dependency updates
+
+Dependabot opens pull requests every Monday morning, Dhaka time, at most five
+at a time, for both npm and the GitHub Actions. `@playwright/test` and
+`@axe-core/playwright` are grouped, because they share `playwright-core` and
+moving one without the other leaves two copies of it. The lint and format tools
+are grouped as `code-quality`.
+
+Every one of those pull requests runs `checks.yml`, so an update is linted,
+formatted, tag-checked, typechecked and smoke-tested before anyone merges it.
+A Playwright bump also moves the Docker image, so read the smoke run before
+merging it, and take the Linux screenshots again afterwards.
+
+### Where to look next
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to add a test the way the rest are
+  written, the tagging rules, and what to do with a flaky test
+- [Flaky test issue form](.github/ISSUE_TEMPLATE/flaky-test.yml)
+- [New test issue form](.github/ISSUE_TEMPLATE/new-test.yml)
 
 ## Network checks
 
@@ -640,8 +794,8 @@ test.use({ marketClosed: true });
 - Tests are tagged with Playwright's `tag` option. Smoke tests carry both
   `@smoke` and `@regression`; every other test carries `@regression` and
   whichever of `@a11y`, `@visual`, `@network` and `@mobile` fits.
-- A test name reads like a sentence about the app, for example *buying 5 KRYL
-  takes the same cash in the summary, the message and the menu*.
+- A test name reads like a sentence about the app, for example _buying 5 KRYL
+  takes the same cash in the summary, the message and the menu_.
 - One behaviour per test. Each one arranges, acts, then asserts, with a blank
   line between. Longer flows are split with `test.step`.
 - Every test sets up its own account, so they run alone, in any order and in

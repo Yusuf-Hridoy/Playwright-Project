@@ -53,7 +53,9 @@ export class WatchlistPage extends BasePage {
     this.statusLine = page.getByTestId('watchlist-status');
     this.emptyMessage = page.getByTestId('watchlist-empty');
     this.removeAllButton = page.getByRole('button', { name: TEXT.watchlist.removeAll });
-    this.browserAlertsButton = page.getByRole('button', { name: TEXT.watchlist.browserAlertsButton });
+    this.browserAlertsButton = page.getByRole('button', {
+      name: TEXT.watchlist.browserAlertsButton,
+    });
     this.browserAlertsStatus = page.getByTestId('browser-alerts-status');
 
     this.alertEditor = page.getByTestId('alert-editor');
@@ -104,7 +106,9 @@ export class WatchlistPage extends BasePage {
 
   /** The symbols on the list, in the order they are shown. */
   async order(): Promise<string[]> {
-    return this.allRows().evaluateAll((rows) => rows.map((row) => row.getAttribute('data-symbol') ?? ''));
+    return this.allRows().evaluateAll((rows) =>
+      rows.map((row) => row.getAttribute('data-symbol') ?? ''),
+    );
   }
 
   /** Picks a stock in the drop-down and presses Add. */
@@ -154,7 +158,11 @@ export class WatchlistPage extends BasePage {
    * Fills in the open alert editor and saves it. The price is in dollars,
    * written the way a person would type it, like "52.11".
    */
-  async saveAlert(options: { direction: AlertDirection; priceDollars: string; popup?: boolean }): Promise<void> {
+  async saveAlert(options: {
+    direction: AlertDirection;
+    priceDollars: string;
+    popup?: boolean;
+  }): Promise<void> {
     if (options.direction === 'above') await this.alertAbove.check();
     else await this.alertBelow.check();
 

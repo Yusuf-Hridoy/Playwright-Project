@@ -79,7 +79,10 @@ export class StockPage extends BasePage {
       element: 'price',
       ways: [
         { how: 'test id stock-price', locator: page.getByTestId('stock-price') },
-        { how: 'renamed test id stock-price', locator: page.getByTestId(renamedTestId('stock-price')) },
+        {
+          how: 'renamed test id stock-price',
+          locator: page.getByTestId(renamedTestId('stock-price')),
+        },
       ],
     });
     this.change = page.getByTestId('stock-change');
@@ -96,7 +99,10 @@ export class StockPage extends BasePage {
       where: 'StockPage',
       element: 'Sell tab',
       ways: [
-        { how: 'role tab named Sell', locator: page.getByRole('tab', { name: TEXT.stock.tabSell }) },
+        {
+          how: 'role tab named Sell',
+          locator: page.getByRole('tab', { name: TEXT.stock.tabSell }),
+        },
         { how: 'renamed test id tab-sell', locator: page.getByTestId(renamedTestId('tab-sell')) },
       ],
     });
@@ -120,7 +126,10 @@ export class StockPage extends BasePage {
       element: 'summary total',
       ways: [
         { how: 'test id summary-total', locator: page.getByTestId('summary-total') },
-        { how: 'renamed test id summary-total', locator: page.getByTestId(renamedTestId('summary-total')) },
+        {
+          how: 'renamed test id summary-total',
+          locator: page.getByTestId(renamedTestId('summary-total')),
+        },
       ],
     });
     this.summaryCashAfter = page.getByTestId('summary-cash-after');
@@ -134,7 +143,10 @@ export class StockPage extends BasePage {
           how: 'role button named Buy or Sell with a number',
           locator: page.getByRole('button', { name: /^(Buy|Sell) \d+ [A-Z]+$/ }),
         },
-        { how: 'role button named buy, sell or place order', locator: page.getByRole('button', { name: TRADE_MAIN_BUTTON }) },
+        {
+          how: 'role button named buy, sell or place order',
+          locator: page.getByRole('button', { name: TRADE_MAIN_BUTTON }),
+        },
       ],
     });
     this.error = page.getByTestId('trade-error');
@@ -184,7 +196,10 @@ export class StockPage extends BasePage {
       element: 'success box',
       ways: [
         { how: 'test id trade-success', locator: page.getByTestId('trade-success') },
-        { how: 'renamed test id trade-success', locator: page.getByTestId(renamedTestId('trade-success')) },
+        {
+          how: 'renamed test id trade-success',
+          locator: page.getByTestId(renamedTestId('trade-success')),
+        },
       ],
     });
     this.successTitle = healing({
@@ -192,7 +207,10 @@ export class StockPage extends BasePage {
       element: 'success title',
       ways: [
         { how: 'test id success-title', locator: page.getByTestId('success-title') },
-        { how: 'the heading that says Bought or Sold', locator: page.getByRole('heading', { name: TRADE_DONE_HEADING }) },
+        {
+          how: 'the heading that says Bought or Sold',
+          locator: page.getByRole('heading', { name: TRADE_DONE_HEADING }),
+        },
       ],
     });
     this.successDetail = page.getByTestId('success-detail');

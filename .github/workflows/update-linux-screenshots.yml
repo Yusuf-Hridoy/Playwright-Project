@@ -1,9 +1,10 @@
 # Makes the Linux screenshots the nightly run needs.
 #
-# Screenshots are per platform. A baseline taken on Windows is not the same
-# image as one taken on an Ubuntu runner, so the visual tests fail on CI with
-# "missing snapshot" until this has been run once. Start it by hand from the
-# Actions tab, then `git pull` to get the new files.
+# Screenshots are per platform, and they are also per image: a baseline taken
+# on Windows is not the same picture as one taken inside the Playwright
+# container the nightly run uses. The visual tests fail on CI with "missing
+# snapshot" until this has been run once. Start it by hand from the Actions
+# tab, then `git pull` to get the new files.
 name: update-linux-screenshots
 
 on: workflow_dispatch
@@ -17,10 +18,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The one place the Playwright version is read. See checks.yml.
+  version:
+    name: Work out the Playwright image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      image: ${{ steps.read.outputs.image }}
+    steps:
+      - name: Check out the tests
+        uses: actions/checkout@v7
+
+      - name: Read the Playwright version from package.json
+        id: read
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').devDependencies['@playwright/test']")"
+          echo "Playwright is $version"
+          echo "image=mcr.microsoft.com/playwright:v${version}-noble" >> "$GITHUB_OUTPUT"
+
   update:
     name: Take the Linux screenshots
+    needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
+    container:
+      image: ${{ needs.version.outputs.image }}
+
+    env:
+      HOME: /root
 
     steps:
       - name: Check out the tests
@@ -35,10 +62,6 @@ jobs:
       - name: Install the dependencies
         run: npm ci
 
-      # The visual tests only run on Chromium.
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
       # A run that writes a new baseline still reports the test as failed, so
       # the files it wrote are what counts, not the exit code.
       - name: Write the screenshots
@@ -49,6 +72,10 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Inside the container the checkout belongs to a different user than
+          # the one git expects, and git refuses to touch it until it is told
+          # the directory is fine.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 

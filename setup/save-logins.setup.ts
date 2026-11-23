@@ -10,26 +10,27 @@ import { test as setup, expect } from '../fixtures/test-fixtures';
 import { DEMO_ACCOUNTS } from '../data/demo-accounts';
 import { money } from '../utils/money';
 
-setup('save a signed-in session for each demo account', { tag: ['@smoke', '@regression', '@a11y', '@visual', '@network', '@mobile'] }, async ({
-  page,
-  loginPage,
-  marketPage,
-  topMenu,
-}) => {
-  for (const account of DEMO_ACCOUNTS) {
-    await setup.step(`log in as ${account.displayName}`, async () => {
-      await loginPage.goto();
-      await loginPage.logIn(account.email, account.password);
+setup(
+  'save a signed-in session for each demo account',
+  {
+    tag: ['@smoke', '@regression', '@a11y', '@visual', '@network', '@mobile', '@p1', '@p2', '@p3'],
+  },
+  async ({ page, loginPage, marketPage, topMenu }) => {
+    for (const account of DEMO_ACCOUNTS) {
+      await setup.step(`log in as ${account.displayName}`, async () => {
+        await loginPage.goto();
+        await loginPage.logIn(account.email, account.password);
 
-      await marketPage.waitUntilReady();
-      await expect(topMenu.cash).toContainText(money(account.start.cashCents));
+        await marketPage.waitUntilReady();
+        await expect(topMenu.cash).toContainText(money(account.start.cashCents));
 
-      await page.context().storageState({ path: account.storageState });
-      await page.context().clearCookies();
-      await page.evaluate(() => {
-        window.localStorage.clear();
-        window.sessionStorage.clear();
+        await page.context().storageState({ path: account.storageState });
+        await page.context().clearCookies();
+        await page.evaluate(() => {
+          window.localStorage.clear();
+          window.sessionStorage.clear();
+        });
       });
-    });
-  }
-});
+    }
+  },
+);

@@ -73,7 +73,10 @@ export class WalletPage extends BasePage {
       element: 'cash figure',
       ways: [
         { how: 'test id wallet-cash', locator: page.getByTestId('wallet-cash') },
-        { how: 'renamed test id wallet-cash', locator: page.getByTestId(renamedTestId('wallet-cash')) },
+        {
+          how: 'renamed test id wallet-cash',
+          locator: page.getByTestId(renamedTestId('wallet-cash')),
+        },
       ],
     });
 
@@ -82,8 +85,14 @@ export class WalletPage extends BasePage {
       where: 'WalletPage',
       element: 'Add button',
       ways: [
-        { how: 'role button named Add and an amount', locator: page.getByRole('button', { name: /^Add \$[\d,]+$/ }) },
-        { how: 'role button named add or top up and an amount', locator: page.getByRole('button', { name: ADD_MONEY_BUTTON }) },
+        {
+          how: 'role button named Add and an amount',
+          locator: page.getByRole('button', { name: /^Add \$[\d,]+$/ }),
+        },
+        {
+          how: 'role button named add or top up and an amount',
+          locator: page.getByRole('button', { name: ADD_MONEY_BUTTON }),
+        },
       ],
     });
     this.addMessage = page.getByTestId('add-message');
@@ -96,7 +105,10 @@ export class WalletPage extends BasePage {
     this.payCancelButton = this.payStep.getByRole('button', { name: TEXT.common.cancel });
     this.paymentFrame = new PaymentFrame(page);
 
-    this.startOverButton = page.getByRole('button', { name: TEXT.wallet.startOverButton, exact: true });
+    this.startOverButton = page.getByRole('button', {
+      name: TEXT.wallet.startOverButton,
+      exact: true,
+    });
     this.startOverDialog = new ConfirmDialog(page.getByTestId('start-over-dialog'), {
       confirm: TEXT.wallet.startOverConfirm,
       cancel: TEXT.common.cancel,
@@ -147,7 +159,10 @@ export class WalletPage extends BasePage {
       where: 'WalletPage',
       element: `${amount} choice`,
       ways: [
-        { how: 'role radio named after the amount', locator: this.page.getByRole('radio', { name: amount }) },
+        {
+          how: 'role radio named after the amount',
+          locator: this.page.getByRole('radio', { name: amount }),
+        },
         {
           how: 'renamed test id add-amount',
           locator: this.page.getByTestId(renamedTestId(this.amountTestId(amount))),
