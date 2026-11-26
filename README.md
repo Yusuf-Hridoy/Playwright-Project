@@ -9,7 +9,7 @@ Playwright and TypeScript.
 The app under test is live at <https://practiceapp-six.vercel.app>. It uses
 practice money only. Nothing here touches a real account.
 
-There are **130 tests**. 111 of them are the everyday suite: logging in,
+There are **133 tests**. 114 of them are the everyday suite: logging in,
 sessions, the market, buying, selling, the portfolio, the wallet, card
 payments, receipts, the history filters and its pages, the watchlist, price
 alerts and the profile page, the news box and the News page, the chart's hover
@@ -27,16 +27,17 @@ The full run goes out every night and the merged report is published at
 
 ## At a glance
 
-- **130 tests**, plus the log in setup
-- **9 projects**: `setup`, `chromium`, `firefox`, `webkit`, `mobile`,
-  `bug-hunt`, `drift`, `resilience`, `quarantine`
-- **47 of 50 requirements covered** — see
+- **133 tests**, plus the log in setup and the agents' seed
+- **10 projects**: `setup`, `chromium`, `firefox`, `webkit`, `mobile`,
+  `bug-hunt`, `drift`, `resilience`, `seed`, `quarantine`
+- **50 of 50 requirements covered** — see
   [the coverage table](docs/requirements-coverage.md)
 - **Bugs caught: 5 of 5** in the bug hunt
 - The app under test: <https://practiceapp-six.vercel.app>
 - The nightly report: <https://yusuf-hridoy.github.io/Playwright-Project/>
 - The last 30 nights: <https://yusuf-hridoy.github.io/Playwright-Project/history.html>
 - How to work on this repo: [CONTRIBUTING.md](CONTRIBUTING.md)
+- The same rules for an AI coding agent: [AGENTS.md](AGENTS.md)
 
 ## How the parts fit together
 
@@ -48,7 +49,7 @@ flowchart TD
         B["builders/<br/>account state builder"]
     end
 
-    T["tests/<br/>130 specs, one behaviour each"]
+    T["tests/<br/>133 specs, one behaviour each"]
     F["fixtures/<br/>test-fixtures.ts"]
     P["pages/ and components/<br/>actions and locators"]
     A["Tradeloom<br/>in a real browser"]
@@ -171,23 +172,26 @@ one test with no requirement tag.
 
 ## What is in each folder
 
-| Folder        | What lives there                                                                                                                                                      |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `config/`     | Which site to test, and the seed, clock, locale and time zone                                                                                                         |
-| `data/`       | The demo accounts, the 8 stocks, every message a test checks, the renamed labels, the flaky seeds and the known accessibility issues                                  |
-| `builders/`   | The account state builder, which writes an exact account into storage                                                                                                 |
-| `fixtures/`   | The `test` object every spec imports                                                                                                                                  |
-| `pages/`      | One page object per page of the app                                                                                                                                   |
-| `components/` | Parts that show up on more than one page: menu, rows, dialogs, pop-ups, the card payment frame, the news box, the chart hover, the offline banner and the idle dialog |
-| `setup/`      | Logs in once per demo account and saves the session to `.auth/`                                                                                                       |
-| `test-files/` | The one small photo the profile tests upload                                                                                                                          |
-| `tests/`      | The specs, grouped by feature                                                                                                                                         |
-| `checks/`     | Checks shared by an everyday test and its bug-hunt twin                                                                                                               |
-| `reporters/`  | The bug-hunt score, the heal report and the flaky list                                                                                                                |
-| `utils/`      | Money formatting, page paths, the frozen clock, backup locators, the accessibility scan and a couple of measurements                                                  |
-| `docs/`       | The requirement list, and the coverage table a script writes from it                                                                                                  |
-| `scripts/`    | The tag check, the coverage table and the nightly history, as plain Node                                                                                              |
-| `.github/`    | The three CI workflows, Dependabot, the pull request template and the issue forms                                                                                     |
+| Folder               | What lives there                                                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config/`            | Which site to test, and the seed, clock, locale and time zone                                                                                                         |
+| `data/`              | The demo accounts, the 8 stocks, every message a test checks, the renamed labels, the flaky seeds and the known accessibility issues                                  |
+| `builders/`          | The account state builder, which writes an exact account into storage                                                                                                 |
+| `fixtures/`          | The `test` object every spec imports                                                                                                                                  |
+| `pages/`             | One page object per page of the app                                                                                                                                   |
+| `components/`        | Parts that show up on more than one page: menu, rows, dialogs, pop-ups, the card payment frame, the news box, the chart hover, the offline banner and the idle dialog |
+| `setup/`             | Logs in once per demo account and saves the session to `.auth/`                                                                                                       |
+| `test-files/`        | The one small photo the profile tests upload                                                                                                                          |
+| `tests/`             | The specs, grouped by feature                                                                                                                                         |
+| `checks/`            | Checks shared by an everyday test and its bug-hunt twin                                                                                                               |
+| `reporters/`         | The bug-hunt score, the heal report and the flaky list                                                                                                                |
+| `utils/`             | Money formatting, page paths, the frozen clock, backup locators, the accessibility scan and a couple of measurements                                                  |
+| `docs/`              | The requirement list, and the coverage table a script writes from it                                                                                                  |
+| `scripts/`           | The tag check, the coverage table and the nightly history, as plain Node                                                                                              |
+| `ai/`                | The AI triage and heal-suggestion steps, and the prompts they send                                                                                                    |
+| `specs/`             | Test plans, written with the Playwright planner agent                                                                                                                 |
+| `exploratory-notes/` | Notes from exploratory sessions. Notes only, never code                                                                                                               |
+| `.github/`           | The three CI workflows, Dependabot, the pull request template and the issue forms                                                                                     |
 
 ## How the test data works
 
@@ -567,6 +571,110 @@ npm run update-snapshots
 
 Then look at the new pictures before keeping them. A baseline updated without
 looking is a check that has stopped checking.
+
+## AI in this framework
+
+Phase 7 added four AI parts. Every one of them suggests; a person decides.
+
+### What each part does
+
+| Part                                      | What it does                                                                                                                     |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)                    | The rules of this repo, written for an AI coding tool. `CLAUDE.md` is one line, `@AGENTS.md`, which is how Claude Code finds it. |
+| [Playwright MCP](.mcp.json)               | A real browser an agent can drive, for exploratory sessions. See [the guide](docs/exploratory-testing-guide.md).                 |
+| [Playwright test agents](.claude/agents/) | A planner, a generator and a healer. They wrote the plans in `specs/` and the first drafts of the last three tests.              |
+| `npm run ai:triage`                       | Reads the night's failures and says what kind of problem each one looks like.                                                    |
+| `npm run ai:heal`                         | Reads the heal report and suggests a better locator for each element a test had to heal around.                                  |
+
+### What a person still decides
+
+Everything that changes a file. The AI writes two reports and stops:
+
+- **Triage** says "this looks like an app bug". You open the app, or the trace,
+  and find out. The table in
+  [How to read the AI output](#how-to-read-the-ai-output) says what to do with
+  each answer.
+- **Heal suggestions** come with the old locator, the new one, and whether the
+  new one was checked on the real page. Pasting it into the page object is a
+  person's job, in a pull request, like any other change.
+
+Nothing is ever filed, messaged or committed on your behalf.
+
+### The safety rules
+
+- **No code written by an AI is run.** A heal suggestion is a description —
+  `{ strategy: 'role', role: 'button', name: 'Log in' }` — and
+  `ai/suggest-heals.mjs` builds the Playwright locator itself, from four
+  strategies and nothing else.
+- **Every answer is checked for shape first.** `ai/check-shape.mjs` rejects an
+  answer with a field it does not know, a category that is not on the list, or
+  a strategy it cannot build. A rejected answer is shown as unusable, never
+  patched up.
+- **Every heal suggestion is verified on the page.** The script reopens the
+  same page, with the same drift and the same saved login, and the suggestion
+  is only marked `verified` when the built locator finds exactly one element
+  and it is the same element the backup locator found.
+- **Nothing private leaves the machine.** `ai/redact.mjs` strips keys, tokens,
+  JWTs and embedded files from every string before it is sent, and cuts each
+  error to 1,500 characters and each step list to the last 10 steps.
+- **An AI step can never fail a run, or message anyone, or open an issue.**
+  Both run with `continue-on-error`, and both exit successfully with one clear
+  note when there is no key or the provider is down.
+- **No AI SDK packages.** Both providers are called with plain `fetch`, from
+  `ai/ai-client.mjs`, so what is sent and where is all in one readable file.
+
+### Switching provider
+
+Three environment variables, and nothing else:
+
+| Name                             | Meaning                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `AI_PROVIDER`                    | `groq` or `gemini`. Missing or anything else: the AI steps are skipped. |
+| `AI_MODEL`                       | Optional. Overrides the default model for that provider.                |
+| `GROQ_API_KEY`, `GEMINI_API_KEY` | The key for the provider you chose.                                     |
+
+On CI, `AI_PROVIDER` and `AI_MODEL` come from repository **variables** and the
+two keys from repository **secrets**. On a laptop they go in `.env`, which is
+never committed. The default model for each provider, and why it was chosen, is
+written down in one place at the top of `ai/ai-client.mjs`.
+
+```bash
+# on a laptop, after a drift run
+npm run test:drift
+AI_PROVIDER=groq GROQ_API_KEY=... npm run ai:heal
+```
+
+### How to read the AI output
+
+| You see                               | What it means                                   | What you do                                                |
+| ------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| Triage: app bug, high confidence      | The app likely broke                            | Check that part of the app by hand first                   |
+| Triage: test bug                      | The test likely needs fixing, not the app       | Open the test and the trace                                |
+| Triage: flaky                         | Random timing                                   | Watch it a few nights. If it repeats, tag it `@quarantine` |
+| Triage: environment                   | The site or the network was down                | Usually nothing. Re-run later                              |
+| Triage: AI couldn't classify this one | The answer was not usable                       | Read the error yourself, as before                         |
+| Heal: verified                        | The new locator finds exactly the right element | Copy it into the page object, as the new first way         |
+| Heal: not verified                    | The suggestion did not check out                | Ignore it, or fix the locator yourself                     |
+| AI ... skipped: no key                | `AI_PROVIDER` or the key is missing             | Set them, or leave them: the run is green either way       |
+
+### Where it runs
+
+- **The nightly**, in the merge job, after the reports are merged: triage over
+  the merged results file, then heal suggestions. `ai-report/` goes up as an
+  artifact, and both tables are added to the run's summary page.
+- **After each deploy of the app**, from the app's own workflow, which runs
+  `npm run ai:heal` against the live site. A heal there means the app really
+  changed under the tests, which is exactly when a suggestion is worth having.
+- **On a laptop**, with `BASE_URL` and whatever heal report your last run left
+  behind.
+
+### Reading further
+
+- [AGENTS.md](AGENTS.md) — the rules, for an agent
+- [docs/ai-agents-walkthrough.md](docs/ai-agents-walkthrough.md) — how the test
+  agents were actually used here, honestly, with the prompts
+- [docs/exploratory-testing-guide.md](docs/exploratory-testing-guide.md) — the
+  three ready exploratory missions
 
 ## Continuous integration
 

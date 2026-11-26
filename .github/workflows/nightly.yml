@@ -162,6 +162,50 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+      # --- the two AI steps ---
+      #
+      # Both write a report a person reads, and neither can fail the night:
+      # if: always() so they still run when a shard went red, and
+      # continue-on-error so a provider being down is a note, not a failure.
+      # No code written by an AI is run anywhere in either of them.
+
+      # ai:heal reopens each healed page to check the suggestion on it, so it
+      # needs the saved logins. The shards each made their own copy of .auth/
+      # and none of it comes this far, so this job logs in once of its own.
+      - name: Log in once, so the heal check has a session
+        if: always()
+        continue-on-error: true
+        run: npx playwright test --project=setup
+
+      - name: AI triage of tonight's failures
+        if: always()
+        continue-on-error: true
+        run: npm run ai:triage -- nightly-results.json
+        env:
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: AI heal suggestions
+        if: always()
+        continue-on-error: true
+        run: npm run ai:heal
+        env:
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Keep what the AI wrote
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-report
+          path: ai-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
       - name: Keep the flaky list
         if: always()
         uses: actions/upload-artifact@v7

@@ -64,9 +64,23 @@ export default tseslint.config(
         process: 'readonly',
         fetch: 'readonly',
         URL: 'readonly',
+        URLSearchParams: 'readonly',
+        AbortController: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         TextDecoder: 'readonly',
         TextEncoder: 'readonly',
       },
+    },
+  },
+
+  // ai/suggest-heals.mjs hands a function to locator.evaluate(), and that
+  // function runs inside the page, not in Node. `document` is a real global
+  // there, and nowhere else in this file.
+  {
+    files: ['ai/suggest-heals.mjs'],
+    languageOptions: {
+      globals: { document: 'readonly' },
     },
   },
 

@@ -27,7 +27,7 @@
 // the frame, it was built from, which is what lets the card form inside the
 // payment frame heal the same way the rest of the app does.
 
-import { test, type Locator } from '@playwright/test';
+import { test, type Locator, type Page } from '@playwright/test';
 
 /** The annotation one heal leaves behind. The heal reporter reads these. */
 export const HEAL_ANNOTATION = 'healed';
@@ -60,6 +60,99 @@ export interface HealEvent {
   readonly element: string;
   readonly failed: string;
   readonly used: string;
+  /**
+   * The page it happened on, the path only: "/wallet". Never the host, so a
+   * report from a preview deploy says the same thing as one from production.
+   */
+  readonly path: string;
+  /**
+   * The few query values that say *which* page it was, like "symbol=KRYL".
+   * A path on its own is not enough to open the Stock page or one receipt
+   * again. Only the names in PAGE_QUERY_KEYS are kept, so nothing else from a
+   * link can ride along.
+   */
+  readonly query: string;
+  /** The drift switches that test ran with, like "text,ids". "" is none. */
+  readonly drift: string;
+  /** The saved login it used, like "trader". "" when the test logged in itself. */
+  readonly login: string;
+  /** Playwright's own selector for the way that failed. See selectorOf(). */
+  readonly failedSelector: string;
+  /** Playwright's own selector for the way that worked. See selectorOf(). */
+  readonly usedSelector: string;
+}
+
+/**
+ * Playwright's own selector string for a locator, like
+ * `internal:role=button[name="Log in"i]`.
+ *
+ * It is not part of the public API, but `page.locator()` takes it straight
+ * back, and that is what lets ai/suggest-heals.mjs open the page again later
+ * and find the very same element — without running a single line of code
+ * written by an AI. A Playwright version that stops exposing it leaves the
+ * field empty, and the script then skips that element with a note instead of
+ * guessing.
+ */
+function selectorOf(locator: Locator): string {
+  const inner = locator as unknown as { _selector?: unknown };
+  return typeof inner._selector === 'string' ? inner._selector : '';
+}
+
+/**
+ * The two things about a test that the helper cannot see for itself: the drift
+ * it was asked to run with, and which saved login it started from. The fixture
+ * in fixtures/test-fixtures.ts records them for each test before it starts, and
+ * ai/suggest-heals.mjs needs both to open the same page again the same way.
+ */
+export interface HealContext {
+  readonly drift: readonly string[];
+  /** The storageState path, like ".auth/trader.json", or undefined. */
+  readonly storageState: string | undefined;
+}
+
+const healContexts = new Map<string, HealContext>();
+
+/** Called once per test by the fixture. Never called by a test or a page object. */
+export function rememberHealContext(testId: string, context: HealContext): void {
+  healContexts.set(testId, context);
+}
+
+/** ".auth/trader.json" -> "trader". Anything else comes back as "". */
+function loginNameOf(storageState: string | undefined): string {
+  if (storageState === undefined || storageState === '') return '';
+  const file = storageState.replace(/\\/g, '/').split('/').pop() ?? '';
+  return file.replace(/\.json$/i, '');
+}
+
+/** "https://host/wallet?seed=42" -> "/wallet". A URL it cannot read comes back as "". */
+function pathOf(url: string): string {
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * The query names that pick out which page of the app this is, rather than how
+ * it was switched. The switches are recorded separately, and the seed is the
+ * same on every run, so neither is here.
+ */
+const PAGE_QUERY_KEYS: readonly string[] = ['symbol', 'id', 'mode', 'type', 'page', 'next'];
+
+/** "https://host/stock?symbol=KRYL&seed=42" -> "symbol=KRYL". */
+function queryOf(url: string): string {
+  try {
+    const search = new URL(url).searchParams;
+    const kept = new URLSearchParams();
+    for (const key of PAGE_QUERY_KEYS) {
+      const value = search.get(key);
+      if (value !== null && value !== '') kept.set(key, value);
+    }
+    return kept.toString();
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -69,11 +162,26 @@ export interface HealEvent {
  */
 const alreadyTold = new Set<string>();
 
-function tellOnce(event: HealEvent): void {
+/** What the helper knows on its own, before the page and the test are added. */
+type HealFacts = Pick<
+  HealEvent,
+  'where' | 'element' | 'failed' | 'used' | 'failedSelector' | 'usedSelector'
+>;
+
+function tellOnce(facts: HealFacts, page: Page): void {
   const info = test.info();
-  const key = `${info.testId}|${event.where}|${event.element}|${event.used}`;
+  const key = `${info.testId}|${facts.where}|${facts.element}|${facts.used}`;
   if (alreadyTold.has(key)) return;
   alreadyTold.add(key);
+
+  const context = healContexts.get(info.testId);
+  const event: HealEvent = {
+    ...facts,
+    path: pathOf(page.url()),
+    query: queryOf(page.url()),
+    drift: (context?.drift ?? []).join(','),
+    login: loginNameOf(context?.storageState),
+  };
   info.annotations.push({ type: HEAL_ANNOTATION, description: JSON.stringify(event) });
 }
 
@@ -173,6 +281,9 @@ export function healing(options: HealingOptions): Locator {
   if (ways.length === 1) return first.locator;
 
   const chain = anyOf(ways);
+  // The page every way was built from. The payment frame's ways are built on a
+  // FrameLocator, and page() still gives the page that frame lives in.
+  const owner = first.locator.page();
   let checked = false;
 
   async function checkWhichWayWorks(): Promise<void> {
@@ -194,7 +305,19 @@ export function healing(options: HealingOptions): Locator {
 
     for (const way of ways) {
       if ((await way.locator.count()) === 0) continue;
-      if (way !== first) tellOnce({ where, element, failed: first.how, used: way.how });
+      if (way !== first) {
+        tellOnce(
+          {
+            where,
+            element,
+            failed: first.how,
+            used: way.how,
+            failedSelector: selectorOf(first.locator),
+            usedSelector: selectorOf(way.locator),
+          },
+          owner,
+        );
+      }
       return;
     }
   }

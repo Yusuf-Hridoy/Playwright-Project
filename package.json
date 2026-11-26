@@ -24,6 +24,8 @@
     "format:check": "prettier --check .",
     "check:tags": "node scripts/check-test-tags.mjs",
     "coverage:requirements": "node scripts/requirements-coverage.mjs",
+    "ai:triage": "node ai/triage-failures.mjs",
+    "ai:heal": "node ai/suggest-heals.mjs",
     "update-snapshots": "playwright test --grep @visual --project=chromium --update-snapshots",
     "prepare": "node -e \"process.env.CI || require('child_process').execSync('husky',{stdio:'inherit'})\""
   },

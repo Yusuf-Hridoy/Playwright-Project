@@ -460,6 +460,12 @@ export const BUSY: DemoAccount = Object.freeze<DemoAccount>({
 
 export const DEMO_ACCOUNTS: readonly DemoAccount[] = Object.freeze([TRADER, NEWBIE, BUSY]);
 
+/**
+ * What every account starts with, from js/account-storage.js. It is cash on
+ * day one, and it counts towards the $50,000 add limit below.
+ */
+export const START_CASH_CENTS = 1000000;
+
 /** The most you can ever add, from js/trade-rules.js. */
 export const ADD_LIMIT_CENTS = 5000000;
 

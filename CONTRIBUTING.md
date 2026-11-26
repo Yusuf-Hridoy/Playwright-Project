@@ -3,6 +3,9 @@
 This is the Playwright test suite for [Tradeloom](https://practiceapp-six.vercel.app).
 Short sentences, plain English, and every test earns its place.
 
+Working with an AI coding tool? The same rules, written for an agent, are in
+[AGENTS.md](AGENTS.md). Claude Code reads it through the one-line `CLAUDE.md`.
+
 ## Setting up
 
 ```bash

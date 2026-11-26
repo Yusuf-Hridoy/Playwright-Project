@@ -36,10 +36,29 @@ interface HealEvent {
   readonly element: string;
   readonly failed: string;
   readonly used: string;
+  /** The page it happened on, the path only: "/wallet". Never the host. */
+  readonly path: string;
+  /** The query values that say which page it was, like "symbol=KRYL". */
+  readonly query: string;
+  /** The drift switches that test ran with, like "text,ids". "" is none. */
+  readonly drift: string;
+  /** The saved login it used, like "trader". "" when the test logged in itself. */
+  readonly login: string;
+  /** Playwright's own selector for the way that failed. */
+  readonly failedSelector: string;
+  /**
+   * Playwright's own selector for the way that worked. ai/suggest-heals.mjs
+   * hands it back to page.locator() to find the very same element again.
+   */
+  readonly usedSelector: string;
 }
 
 interface HealRow extends HealEvent {
-  /** How many tests hit this one heal. */
+  /**
+   * How many tests hit this one heal. The page, the drift and the login are
+   * the ones the first of those tests ran with, which is all ai/suggest-heals.mjs
+   * needs to open that page again the same way.
+   */
   tests: number;
   /** The projects it happened in, so a heal outside drift can be spotted. */
   projects: string[];
@@ -83,7 +102,18 @@ export default class HealReporter implements Reporter {
       event = JSON.parse(description) as HealEvent;
     } catch {
       // A note that will not parse is still worth showing, rather than losing.
-      event = { where: 'unknown', element: description, failed: 'unknown', used: 'unknown' };
+      event = {
+        where: 'unknown',
+        element: description,
+        failed: 'unknown',
+        used: 'unknown',
+        path: '',
+        query: '',
+        drift: '',
+        login: '',
+        failedSelector: '',
+        usedSelector: '',
+      };
     }
 
     const key = keyOf(event);
@@ -146,12 +176,13 @@ export default class HealReporter implements Reporter {
       lines.push('No locator had to heal in this run.', '');
     } else {
       lines.push(
-        '| Page object | Element | What failed | What worked | Tests |',
-        '| --- | --- | --- | --- | --- |',
+        '| Page object | Element | What failed | What worked | Page | Drift | Login | Tests |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- |',
       );
       for (const row of heals) {
         lines.push(
-          `| ${row.where} | ${row.element} | ${row.failed} | ${row.used} | ${row.tests} |`,
+          `| ${row.where} | ${row.element} | ${row.failed} | ${row.used} | ` +
+            `${row.path || '-'} | ${row.drift || 'none'} | ${row.login || '-'} | ${row.tests} |`,
         );
       }
       lines.push('');

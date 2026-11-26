@@ -8,12 +8,18 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { REPO, isLoginSetup, listTests, readRequirements } from './read-tests-and-requirements.mjs';
+import {
+  REPO,
+  isAgentSeed,
+  isLoginSetup,
+  listTests,
+  readRequirements,
+} from './read-tests-and-requirements.mjs';
 
 const OUTPUT_FILE = path.join(REPO, 'docs', 'requirements-coverage.md');
 
 const requirements = readRequirements();
-const tests = listTests().filter((test) => !isLoginSetup(test.file));
+const tests = listTests().filter((test) => !isLoginSetup(test.file) && !isAgentSeed(test.file));
 
 /** requirement ID -> the tests tagged with it. */
 const covering = new Map(requirements.map((requirement) => [requirement.id, []]));

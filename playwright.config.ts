@@ -29,9 +29,14 @@ const RESILIENCE_ONLY = /@resilience/;
 // turn the main run red. No project but that one picks it up.
 const QUARANTINE_ONLY = /@quarantine/;
 
+// tests/seed.spec.ts is the file the Playwright test agents start from, not a
+// test of the app. It gets a project of its own so the agents can run it, and
+// nothing else picks it up.
+const SEED_ONLY = /@seed/;
+
 // What the everyday projects leave out: the phone tests, the four Phase 5
-// areas, and anything parked in quarantine.
-const NOT_FOR_CHROMIUM = /@mobile|@bug-hunt|@drift|@resilience|@quarantine/;
+// areas, anything parked in quarantine, and the agents' seed.
+const NOT_FOR_CHROMIUM = /@mobile|@bug-hunt|@drift|@resilience|@quarantine|@seed/;
 
 export default defineConfig({
   testDir: './tests',
@@ -128,6 +133,16 @@ export default defineConfig({
       name: 'resilience',
       use: { ...devices['Desktop Chrome'] },
       grep: RESILIENCE_ONLY,
+      dependencies: ['setup'],
+    },
+
+    // The seed the Playwright test agents build on. It opens the Market page
+    // from a saved login and checks the cash is there, which is exactly what
+    // every generated test needs in place before its first step.
+    {
+      name: 'seed',
+      use: { ...devices['Desktop Chrome'] },
+      grep: SEED_ONLY,
       dependencies: ['setup'],
     },
 

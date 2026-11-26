@@ -60,6 +60,9 @@ export class ProfilePage extends BasePage {
   readonly emailSummary: Locator;
   readonly emailNews: Locator;
 
+  /** "Your details stay in this browser only.", under the details form. */
+  readonly savedHereLine: Locator;
+
   readonly errorSummary: Locator;
   readonly unsavedLine: Locator;
   readonly undoButton: Locator;
@@ -97,6 +100,8 @@ export class ProfilePage extends BasePage {
     this.emailAlerts = page.getByRole('checkbox', { name: TEXT.profile.emailAlerts });
     this.emailSummary = page.getByRole('checkbox', { name: TEXT.profile.emailSummary });
     this.emailNews = page.getByRole('checkbox', { name: TEXT.profile.emailNews });
+
+    this.savedHereLine = page.getByText(TEXT.profile.savedHere, { exact: true });
 
     this.errorSummary = page.getByTestId('form-error-summary');
     this.unsavedLine = page.getByTestId('unsaved-changes');

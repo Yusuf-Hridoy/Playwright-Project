@@ -220,6 +220,9 @@ export const TEXT = Object.freeze({
     emailSummary: 'Weekly summary',
     emailNews: 'News and tips',
 
+    /** The line under the details form. No test id: it is a plain paragraph. */
+    savedHere: 'Your details stay in this browser only.',
+
     save: 'Save changes',
     saved: 'Your changes are saved.',
     unsaved: 'You have unsaved changes.',

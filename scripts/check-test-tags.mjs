@@ -5,10 +5,16 @@
 //   2. At least one requirement ID, and every ID it uses is in
 //      docs/requirements.md.
 //
-// setup/save-logins.setup.ts is the one exception. It carries every tag there
-// is so that it survives any --grep, and it protects no requirement of its own.
+// Two files are exceptions. setup/save-logins.setup.ts carries every tag there
+// is so that it survives any --grep, and tests/seed.spec.ts is the file the
+// Playwright test agents build on. Neither protects a requirement of its own.
 
-import { isLoginSetup, listTests, readRequirements } from './read-tests-and-requirements.mjs';
+import {
+  isAgentSeed,
+  isLoginSetup,
+  listTests,
+  readRequirements,
+} from './read-tests-and-requirements.mjs';
 
 const PRIORITIES = ['@p1', '@p2', '@p3'];
 
@@ -18,7 +24,7 @@ const tests = listTests();
 const problems = [];
 
 for (const test of tests) {
-  if (isLoginSetup(test.file)) continue;
+  if (isLoginSetup(test.file) || isAgentSeed(test.file)) continue;
 
   const priorities = test.tags.filter((tag) => PRIORITIES.includes(tag));
   const requirements = test.tags.filter((tag) => tag.startsWith('@REQ-'));

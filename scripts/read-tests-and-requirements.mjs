@@ -82,6 +82,15 @@ export function isLoginSetup(file) {
   return file.replace(/\\/g, '/').includes('save-logins.setup.ts');
 }
 
+/**
+ * The seed the Playwright test agents start from. It is scaffolding, not a
+ * test of the app: it protects no requirement and carries no priority, so both
+ * scripts leave it out the same way they leave out the login setup.
+ */
+export function isAgentSeed(file) {
+  return /(^|\/)seed\.spec\.ts$/.test(file.replace(/\\/g, '/'));
+}
+
 export const REQUIREMENTS_FILE = path.join(REPO, 'docs', 'requirements.md');
 
 /**

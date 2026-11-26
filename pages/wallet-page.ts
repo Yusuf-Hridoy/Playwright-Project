@@ -217,6 +217,15 @@ export class WalletPage extends BasePage {
     return this.historyRows().and(this.page.locator(`[data-type="${type}"]`));
   }
 
+  /**
+   * The two money columns of one history row, in the order the table shows
+   * them: what the row changed, then the cash left after it. Each one carries
+   * its exact figure in data-cents.
+   */
+  historyMoneyCells(row: Locator): Locator {
+    return row.locator('td[data-cents]');
+  }
+
   /** The Open link in one row of the table that is on screen. Rows count from 0. */
   receiptLink(rowIndex: number): Locator {
     return this.historyRows().nth(rowIndex).getByRole('link');

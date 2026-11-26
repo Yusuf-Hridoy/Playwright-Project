@@ -7,6 +7,9 @@ blob-report/
 heal-report/
 flaky-report/
 
+# Written by the AI steps in ai/. Reports, never code.
+ai-report/
+
 .auth/
 .env
 venv/

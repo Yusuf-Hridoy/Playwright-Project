@@ -17,6 +17,7 @@ import { TopMenu } from '../components/top-menu';
 import { AccountStateBuilder } from '../builders/account-state-builder';
 import { registerPopupHandlers } from './popup-handlers';
 import { freezeClock } from '../utils/frozen-clock';
+import { rememberHealContext } from '../utils/healing-locator';
 import type { AppSwitches, BugName, DriftName } from '../utils/app-paths';
 
 export interface TradeloomOptions {
@@ -84,6 +85,11 @@ export interface TradeloomFixtures {
   appSwitches: AppSwitches;
   /** Closes the drift popups. Nothing uses it directly; it runs on its own. */
   popupHandlers: void;
+  /**
+   * Tells the healing helper which drift and which saved login this test is
+   * running with, so a heal can be reopened later. Nothing uses it directly.
+   */
+  healContext: void;
 }
 
 export const test = base.extend<TradeloomOptions & TradeloomFixtures>({
@@ -107,6 +113,21 @@ export const test = base.extend<TradeloomOptions & TradeloomFixtures>({
   popupHandlers: [
     async ({ page, drift }, use) => {
       if (drift.includes('popup')) await registerPopupHandlers(page);
+      await use();
+    },
+    { auto: true },
+  ],
+
+  // A heal report is only useful if somebody can open the same page again the
+  // same way. The helper can see the page it healed on, but not which drift
+  // the test asked for or which saved login it started from, so they are
+  // written down here, once per test, before anything opens.
+  healContext: [
+    async ({ drift, storageState }, use, testInfo) => {
+      rememberHealContext(testInfo.testId, {
+        drift,
+        storageState: typeof storageState === 'string' ? storageState : undefined,
+      });
       await use();
     },
     { auto: true },

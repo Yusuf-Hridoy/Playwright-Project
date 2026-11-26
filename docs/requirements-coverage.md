@@ -2,7 +2,7 @@
 
 <!-- Written by scripts/requirements-coverage.mjs. Do not edit by hand. -->
 
-**47 of 50 requirements covered**, by 130 tests.
+**50 of 50 requirements covered**, by 133 tests.
 
 Every requirement is in [requirements.md](requirements.md). Regenerate this page
 with `npm run coverage:requirements`.
@@ -41,13 +41,13 @@ with `npm run coverage:requirements`.
 | REQ-PORTFOLIO-01 | 5 | A portfolio with stocks in it > total worth is the cash plus every holding at today price<br>Selling > selling every LUMA share takes the stock off the portfolio<br>A trader on a drifted app > walks to Portfolio and Wallet through the top menu<br>A trader on a drifted app > sees LUMA in the portfolio with the right number of shares<br>An app that takes three seconds over everything > the Portfolio page shows the trader's holdings |
 | REQ-PORTFOLIO-02 | 3 | Sorting a portfolio > "Sort by gain" puts the biggest gain at the top<br>bug=gain: every gain is shown with the sign turned round > the trader's holdings are caught by the gain check<br>bug=sort: Sort by gain puts the smallest gain first > the upside-down order is caught by the sort check |
 | REQ-PORTFOLIO-03 | 1 | A portfolio with nothing in it > a newbie is told there is nothing to show yet |
-| REQ-PORTFOLIO-04 | 0 | _nothing yet_ |
+| REQ-PORTFOLIO-04 | 1 | Buying the same stock more than once > a second buy values KRYL at the average of everything paid for it |
 
 ## REQ-WALLET
 
 | ID | Tests | Covered by |
 | --- | --- | --- |
-| REQ-WALLET-01 | 0 | _nothing yet_ |
+| REQ-WALLET-01 | 1 | A brand new account > starts with $10,000, as cash and as one starting row in the history |
 | REQ-WALLET-02 | 3 | When a top-up is refused before the card form > an amount over the $50,000 limit never opens the card form<br>Adding practice money > top-ups stop once the account has added $50,000 in all<br>bug=limit: top-ups run on past $50,000 > the extra top-up is caught by the add limit check |
 | REQ-WALLET-03 | 2 | Start over and the profile > starting over puts the display name and the theme back<br>The wallet of a trader who has been trading > start over puts the account back to the money it began with |
 | REQ-WALLET-04 | 1 | The wallet of a trader who has been trading > the history downloads as a CSV named after today in Dhaka |
@@ -87,7 +87,7 @@ with `npm run coverage:requirements`.
 | REQ-PROFILE-02 | 6 | The details form > it opens with the saved details, and Select all is half ticked<br>The details form > three bad fields give three errors, a summary and the focus<br>The details form > turning 18 today is allowed, and a day short of it is not<br>The details form > Select all ticks the three email choices, then clears them<br>The details form > saving a new display name changes the initials in the menu with no reload<br>The details form > leaving with unsaved changes warns, and Undo puts the saved details back |
 | REQ-PROFILE-03 | 3 | The theme > Light stays light on the next page<br>The theme > Match my device follows the device both ways<br>Start over and the profile > starting over puts the display name and the theme back |
 | REQ-PROFILE-04 | 2 | Copying the account ID > the button says Copied!, the clipboard holds the ID, and the label comes back<br>Copying the account ID > a clipboard that refuses says so and offers the ID instead |
-| REQ-PROFILE-05 | 0 | _nothing yet_ |
+| REQ-PROFILE-05 | 1 | Details saved in this browser > a second browser opens the details the account starts with, not the saved ones |
 
 ## REQ-NEWS
 
@@ -124,8 +124,4 @@ with `npm run coverage:requirements`.
 
 ## Not covered yet
 
-| ID | Requirement |
-| --- | --- |
-| REQ-PORTFOLIO-04 | Buying the same stock more than once values it at the average of what you paid. |
-| REQ-WALLET-01 | Every account starts with $10,000. |
-| REQ-PROFILE-05 | Your details are saved in this browser only, so a new browser starts fresh. |
+Every requirement has at least one test.
